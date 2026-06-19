@@ -16,7 +16,7 @@ Each dataclass:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, fields, asdict
+from dataclasses import dataclass
 from typing import Any, Optional
 
 
@@ -73,6 +73,7 @@ class ParsedIntent:
     def validate(self) -> None:
         _require(self.task, "task")
         _require(self.method, "method")
+        _require(self.case, "case")
 
 
 # ---------------------------------------------------------------------------

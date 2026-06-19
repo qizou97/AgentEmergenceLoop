@@ -93,6 +93,21 @@ def test_parsed_intent_validate_missing_method():
         obj.validate()
 
 
+def test_parsed_intent_validate_missing_case():
+    obj = ParsedIntent(
+        task=TASK,
+        method=METHOD,
+        case="",
+        paper_path="data/spatial_domain_identification_task/papers/STAGATE.pdf",
+        repo_path="data/spatial_domain_identification_task/codes/STAGATE",
+        data_notes="DLPFC slice 151673 required. File location unknown locally.",
+        reconstruction_goal="Reproduce spatial domain identification on DLPFC 151673 using ARI.",
+        human_observations="",
+    )
+    with pytest.raises(ValueError):
+        obj.validate()
+
+
 # ---------------------------------------------------------------------------
 # 7.2 PaperEvidence
 # ---------------------------------------------------------------------------
