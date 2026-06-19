@@ -6,12 +6,26 @@ An agent that reconstructs one spatial-omics benchmark task from paper/code/data
 
 Build `sobench`: a 14-step pipeline that takes a `benchmark_intent.md` file plus local paper PDFs and method code, and produces a fully auditable workspace with task spec, data manifest, evaluation contract, execution result (or named blocker), and an experience record.
 
+## Environment Setup
+
+```bash
+conda create -y -n sobench python=3.11
+conda activate sobench
+pip install -r requirements.txt
+cp .env.example .env   # then fill in OPENAI_BASE_URL, OPENAI_MODEL_NAME, OPENAI_API_KEY
+```
+
+The LLM wrapper uses the OpenAI SDK against an OpenAI-compatible endpoint, reading
+`OPENAI_BASE_URL`, `OPENAI_MODEL_NAME`, and `OPENAI_API_KEY` from `.env`. `.env` is
+git-ignored (`.env.example` is the committed template) — never commit real keys.
+Tests skip with an explicit reason when this config is absent (see `docs/TESTING_POLICY.md`).
+
 ## In Scope Now
 
 - `sobench` package: 15 artifact dataclasses, `Workspace` class, LLM wrapper, CLI (`scaffold / run / check / report`)
 - 14 pipeline steps: evidence extraction → task spec → execution → observation → experience record
-- Test suite covering every step against a mocked LLM
-- One end-to-end smoke test over the `data/spatial_domain_identification_task` workspace
+- Test suite covering every step against the real benchmark task under `data/` (no mock tests — see `docs/TESTING_POLICY.md`)
+- One end-to-end smoke/integration test over the real `data/spatial_domain_identification_task` task
 
 ## Out of Scope Now
 

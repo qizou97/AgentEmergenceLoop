@@ -10,25 +10,81 @@
     },
     {
       "id": "feat-sobench-001",
-      "name": "sobench: Models + Workspace",
-      "description": "15 artifact dataclasses (from_dict/to_dict/validate) and Workspace class (path resolution, artifact I/O, blocked property). Foundation for all pipeline steps. Tests: tests/test_models.py, tests/test_workspace.py.",
+      "name": "sobench: Package Skeleton — Models + Workspace",
+      "description": "15 artifact dataclasses (from_dict/to_dict/validate, identity fields task/method/case) and Workspace class (path resolution root/task/case/method, artifact I/O, read_blocker, blocked property). Pure-Python, no LLM. Tests: tests/test_models.py, tests/test_workspace.py.",
       "dependencies": ["feat-001"],
       "status": "not-started",
       "evidence": ""
     },
     {
       "id": "feat-sobench-002",
-      "name": "sobench: LLM Wrapper + CLI Scaffold",
-      "description": "Thin mockable LLM wrapper (llm.complete(prompt) -> str) and CLI scaffold subcommand that creates a workspace dir and benchmark_intent.md template. Run/check/report stubs registered.",
+      "name": "sobench: LLM Wrapper",
+      "description": "sobench/llm.py: complete(prompt, system=\"\") -> str over an OpenAI-compatible endpoint, config from .env via python-dotenv (OPENAI_BASE_URL/OPENAI_MODEL_NAME/OPENAI_API_KEY). Real-LLM test over real data/ inputs; skip with explicit reason if .env config absent.",
       "dependencies": ["feat-sobench-001"],
       "status": "not-started",
       "evidence": ""
     },
     {
       "id": "feat-sobench-003",
-      "name": "sobench: 14-Step Pipeline + Integration Smoke Test",
-      "description": "All 14 pipeline steps (s01–s14), runner.py with SKIP_WHEN_BLOCKED logic, and CLI run/check/report wired. End-to-end smoke test over synthetic workspace (LLM mocked) confirms structural_check.json passed:true for a blocked cycle.",
-      "dependencies": ["feat-sobench-002"],
+      "name": "sobench: CLI + Scaffold Subcommand",
+      "description": "sobench/cli.py (argparse, 4 subcommands) + sobench/__main__.py. scaffold creates workspaces/T/C/M/ and writes benchmark_intent.md template; run/check/report are stubs. Tests: tests/test_cli.py.",
+      "dependencies": ["feat-sobench-001"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "feat-sobench-004",
+      "name": "sobench: Steps s01–s04",
+      "description": "s01 ensure_workspace (raises if missing), s02 parse_intent (LLM, blocker if task/method unparseable), s03 extract_paper_evidence (PDF text + LLM, blocker if paper absent), s04 inspect_repo_evidence (walk repo + LLM, never blocks). Real-task tests over data/spatial_domain_identification_task; LLM steps skip if no key.",
+      "dependencies": ["feat-sobench-001", "feat-sobench-002"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "feat-sobench-005",
+      "name": "sobench: Steps s05–s08",
+      "description": "s05 build_data_manifest (real Path.exists, never blocks), s06 draft_task_spec (blocker if no context), s07 draft_evaluation_contract (metric.resolved:false valid), s08 draft_risk_audit (always writes). Real-task tests; LLM steps skip if no key.",
+      "dependencies": ["feat-sobench-004"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "feat-sobench-006",
+      "name": "sobench: Step s09 — Execute or Block",
+      "description": "Feasibility check; subprocess exec when feasible; always writes blocker.json + execution_log.json (status not_attempted when blocked). Primary real path is blocked (DLPFC .h5ad genuinely absent under data/). Feasible path skips with reason if the real command cannot run here.",
+      "dependencies": ["feat-sobench-005"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "feat-sobench-007",
+      "name": "sobench: Steps s10–s12",
+      "description": "s10 record_raw_observations, s11 audit_result_validity, s12 write_interpretation. s10/s11/s12 skip when workspace.blocked; s12 additionally runs when execution attempted but result invalid (benchmark_result_claimed:false). Real-task tests.",
+      "dependencies": ["feat-sobench-006"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "feat-sobench-008",
+      "name": "sobench: Steps s13–s14",
+      "description": "s13 write_experience_record (always runs, status=hypothesis, captures blocker learning), s14 structural_check (pure Python; passed:false only when missing_unacknowledged non-empty; blocker excuses s10/s11/s12). s13 real-LLM test skips if no key; s14 pure-Python.",
+      "dependencies": ["feat-sobench-007"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "feat-sobench-009",
+      "name": "sobench: Runner + CLI run/check/report",
+      "description": "runner.py calls all 14 steps in order with SKIP_WHEN_BLOCKED (s10/s11/s12 skip when blocked; s13/s14 always run). Wire run/check/report into CLI. Tests verify skip logic and ordering against the real task.",
+      "dependencies": ["feat-sobench-008", "feat-sobench-003"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "feat-sobench-010",
+      "name": "sobench: Integration Smoke Test (real task)",
+      "description": "End-to-end real-task test: intent fixture derived from data/ (provenance header, real paper/repo paths), real LLM, real blocked cycle (no .h5ad). Asserts structural_check passed:true, experience_record status=hypothesis with real evidence refs, blocker blocked:true with real reason, execution_log status=not_attempted. Skips with explicit reason if no key or real data absent.",
+      "dependencies": ["feat-sobench-009"],
       "status": "not-started",
       "evidence": ""
     }

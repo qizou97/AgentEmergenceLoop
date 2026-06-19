@@ -36,8 +36,12 @@ A feature is done only when ALL of the following are true:
 
 - [ ] Target behavior is implemented
 - [ ] Required verification actually ran (tests / lint / type-check)
+- [ ] Tests exercise the **real** benchmark task under `data/` per `docs/TESTING_POLICY.md` — no mock tests
 - [ ] Evidence recorded in `feature_list.json` or `progress.md`
 - [ ] Repository remains restartable from standard startup path
+
+If a feature cannot be tested against the current real task under `data/`, mark
+it **unverified** and do not claim it complete.
 
 ## End of Session
 
@@ -59,6 +63,9 @@ Before ending a session:
 Required checks:
 - `python -m pytest`
 - `python -m compileall .`
+
+All tests must follow `docs/TESTING_POLICY.md`: no mock tests; correctness is
+proven only against the real benchmark task under `data/`.
 
 ## Escalation
 

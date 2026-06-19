@@ -2,8 +2,8 @@
 
 ## Current State
 
-**Last Updated:** 2026-06-19 (direction update)
-**Active Feature:** none — ready to begin feat-sobench-001
+**Last Updated:** 2026-06-19 (implementation session — subagent-driven, real-LLM)
+**Active Feature:** feat-sobench-001 (package skeleton: models + workspace)
 
 ## Project
 
@@ -26,19 +26,25 @@ The 14-step loop reconstructs what benchmark a method paper intended, audits val
 
 ### What's In Progress
 
-- [ ] No active implementation work.
-  - Next: feat-sobench-001 (package skeleton: models + workspace)
+- [ ] feat-sobench-001 (package skeleton: models + workspace) — implementation starting.
+  - Executing the full 10-task plan via subagent-driven development.
 
 ### What's Next
 
-1. Run `./init.sh` to confirm baseline is clean.
-2. Pick feat-sobench-001 and follow plan: write tests first, then implement.
-3. Verify with `python -m pytest tests/test_models.py tests/test_workspace.py`.
+1. feat-sobench-001 → 010 in order, one implementer subagent + task review per feature.
+2. Each feature: write real-task tests first, then implement, then verify with `./init.sh`.
+3. Final whole-branch review, then finish.
 
 ## Blockers / Risks
 
 - None currently.
-- Potential risk: LLM API key required for `sobench/llm.py`. All step tests mock `llm.complete` so this only blocks manual end-to-end runs, not the test suite.
+- LLM API key IS present in `.env` and the endpoint (`deepseek-v4-pro` @ api.deepseek.com)
+  is verified live. Per `docs/TESTING_POLICY.md` step tests drive the REAL `llm.complete`
+  over real `data/` inputs — no mocks. Tests skip with an explicit reason only if the key
+  or required real data goes absent.
+- LLM is a reasoning model: it returns `reasoning_content` separately and spends token
+  budget on reasoning first, so the wrapper must request a generous `max_tokens` or
+  `content` can come back empty.
 
 ## Decisions Made
 
@@ -76,3 +82,19 @@ Changes made:
 - `./init.sh` passed (1 test, 0 compile errors).
 
 **Next action:** implement feat-sobench-001 (models + workspace): write tests first, then `sobench/models.py` and `sobench/workspace.py`, verify with `python -m pytest tests/test_models.py tests/test_workspace.py`.
+
+## Implementation Session (2026-06-19, subagent-driven, real-LLM)
+
+Re-expanded `feature_list.json` from the 3 narrowed items back to the plan's 10 features
+(feat-sobench-001 … 010). Rationale: `docs/TESTING_POLICY.md` (binding/overriding) and the
+updated plan require real-task, no-mock testing; the 3-item list still described "LLM mocked /
+synthetic workspace" for the integration test, which directly conflicts. The 10-feature plan is
+the policy-aligned, TDD-structured source of truth. No design change — same 14-step loop, same
+15 artifacts, same spec.
+
+Environment confirmed at session start:
+- Deps `openai`, `python-dotenv`, `pypdf` installed (pip needs
+  `--trusted-host mirrors.aliyun.com --index-url http://mirrors.aliyun.com/pypi/simple/`).
+- `./init.sh` baseline clean (1 test passing).
+- Real task: `data/spatial_domain_identification_task/` — papers (STAGATE/SpaGCN/MENDER PDFs)
+  + 3 method repos. No `.h5ad` anywhere → execution is a genuine blocked cycle.

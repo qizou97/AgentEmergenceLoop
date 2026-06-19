@@ -6,3 +6,8 @@ build/
 dist/
 *.egg-info/
 
+# Secrets — real API keys live here, never committed
+.env
+.env.*
+!.env.example
+
