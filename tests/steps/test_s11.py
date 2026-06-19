@@ -216,20 +216,6 @@ def test_s11_writes_audit_when_not_blocked(tmp_path):
     )
     ws.write_artifact("blocker", blocker)
 
-    elog = ExecutionLog(
-        task=REAL_TASK,
-        method=REAL_METHOD,
-        case=REAL_CASE,
-        status="success",
-        command="python run_STAGATE.py --slice 151673",
-        stdout_excerpt="Training complete. 7 clusters assigned to 10 spots.",
-        stderr_excerpt="",
-        duration_seconds=42.0,
-        environment={"python": "3.13", "platform": "linux"},
-        output_files=["results/151673_labels.csv"],
-    )
-    ws.write_artifact("execution_log", elog)
-
     ws.write_artifact("raw_observations", _make_raw_observations())
     ws.write_artifact("task_spec", _make_task_spec())
     ws.write_artifact("evaluation_contract", _make_evaluation_contract())

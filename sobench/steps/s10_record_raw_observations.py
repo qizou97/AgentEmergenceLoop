@@ -20,6 +20,7 @@ from __future__ import annotations
 import csv
 import io
 import json as _json
+import re
 from pathlib import Path
 from typing import Optional
 
@@ -62,7 +63,7 @@ def _csv_shape(content: str) -> dict:
         if not rows:
             return {}
         # First row treated as header if it contains non-numeric items
-        ncols = max(len(r) for r in rows) if rows else 0
+        ncols = max(len(r) for r in rows)
         nrows = len(rows) - 1  # exclude header
         return {"rows": max(0, nrows), "columns": ncols}
     except Exception:
@@ -86,7 +87,6 @@ def _detect_metric_deterministic(
             return {"name": col.strip(), "value": None}
 
     # Scan stdout for explicit metric values (e.g. "ARI=0.52" or "ARI: 0.52")
-    import re
     pattern = re.compile(
         r"\b(ARI|NMI|AMI|ACC)\s*[=:]\s*([0-9]+(?:\.[0-9]+)?)",
         re.IGNORECASE,
