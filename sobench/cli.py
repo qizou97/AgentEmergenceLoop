@@ -55,7 +55,7 @@ in the paper, using the primary metric if evidence supports it.
 """
 
 
-def _build_section(label: str, path_value: Optional[str]) -> str:
+def _build_section(path_value: Optional[str]) -> str:
     """Return a section body with a path: convenience line (if path given)."""
     if path_value:
         return f"path: {path_value}\nnotes: (fill in)"
@@ -87,9 +87,9 @@ def _cmd_scaffold(args: argparse.Namespace) -> int:
         task=args.task,
         method=args.method,
         case=args.case,
-        paper_section=_build_section("Paper", getattr(args, "paper", None)),
-        repo_section=_build_section("Repository", getattr(args, "repo", None)),
-        data_section=_build_section("Data", getattr(args, "data", None)),
+        paper_section=_build_section(args.paper),
+        repo_section=_build_section(args.repo),
+        data_section=_build_section(args.data),
     )
 
     intent_path = ws.dir / "benchmark_intent.md"
