@@ -13,8 +13,8 @@
       "name": "sobench: Package Skeleton — Models + Workspace",
       "description": "15 artifact dataclasses (from_dict/to_dict/validate, identity fields task/method/case) and Workspace class (path resolution root/task/case/method, artifact I/O, read_blocker, blocked property). Pure-Python, no LLM. Tests: tests/test_models.py, tests/test_workspace.py.",
       "dependencies": ["feat-001"],
-      "status": "not-started",
-      "evidence": ""
+      "status": "done",
+      "evidence": "2026-06-19: 44 tests pass (43 new + 1 smoke); ./init.sh clean. 14 dataclasses, Workspace class, TDD cycle completed."
     },
     {
       "id": "feat-sobench-002",

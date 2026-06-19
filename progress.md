@@ -83,6 +83,20 @@ Changes made:
 
 **Next action:** implement feat-sobench-001 (models + workspace): write tests first, then `sobench/models.py` and `sobench/workspace.py`, verify with `python -m pytest tests/test_models.py tests/test_workspace.py`.
 
+## feat-sobench-001 DONE (2026-06-19)
+
+- Implemented `sobench/__init__.py`, `sobench/models.py`, `sobench/workspace.py`.
+- 14 artifact dataclasses (ParsedIntent, PaperEvidence, RepoEvidence, DataManifest,
+  TaskSpec, EvaluationContract, RiskAudit, Blocker, ExecutionLog, RawObservations,
+  ResultValidityAudit, Interpretation, ExperienceRecord, StructuralCheck).
+- Each dataclass: from_dict/to_dict/validate; round-trip equality holds.
+- Workspace: dir=root/task/case/method/, artifact_path, read/write_artifact,
+  read_blocker, blocked property.
+- TDD: 43 tests written first (RED: import error); then all 43 + 1 smoke = 44 PASSED.
+- `./init.sh` clean.
+- Concern: plan says "15 dataclasses" but spec section 7 lists 14 JSON artifacts.
+  benchmark_intent.md is human-authored markdown, not a JSON artifact. Implemented 14.
+
 ## Implementation Session (2026-06-19, subagent-driven, real-LLM)
 
 Re-expanded `feature_list.json` from the 3 narrowed items back to the plan's 10 features
