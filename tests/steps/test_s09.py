@@ -280,6 +280,108 @@ def test_s09_blocked_when_required_data_absent(tmp_path):
 
 
 # ---------------------------------------------------------------------------
+# Test 3 — Upstream blocker preserved (PRIMARY, deterministic, NO skip)
+# ---------------------------------------------------------------------------
+
+def test_s09_preserves_upstream_blocker(tmp_path):
+    """
+    s09 preserves an existing blocked:true blocker raised by an upstream step.
+
+    Setup: write a blocker.json with blocked:true (raised_by_step="s02_parse_intent")
+    AND all artifacts that would otherwise make s09 feasible (data_manifest with
+    all required available:true, repo_evidence with real entry_points, task_spec,
+    evaluation_contract, risk_audit with empty blocker_risk_ids).
+
+    Expected:
+      - blocker.json is NOT overwritten — still blocked:true, raised_by_step
+        still "s02_parse_intent" (the upstream step, not "s09_execute_or_block").
+      - execution_log.json is written with status == "not_attempted".
+      - No subprocess is launched (execution_log.command is empty / no stdout).
+      - Both artifacts are present.
+
+    This test is deterministic — no LLM calls, no skip.
+    """
+    # The real h5ad is absent; we use a path that genuinely exists to satisfy
+    # data_manifest available:true (we want s09's own feasibility check to pass
+    # so the only reason for not_attempted is the upstream blocker guard).
+    real_existing_file = "data/spatial_domain_identification_task/README.md"
+    real_existing_path = Path(real_existing_file)
+    # Fall back to any real file if the above doesn't exist yet.
+    if not real_existing_path.exists():
+        import sobench
+        real_existing_file = sobench.__file__
+        real_existing_path = Path(real_existing_file)
+
+    from sobench.steps import s09_execute_or_block
+    from sobench.models import Blocker as BlockerModel
+
+    ws = Workspace(REAL_TASK, REAL_METHOD, REAL_CASE, root=str(tmp_path / "workspaces"))
+    ws.dir.mkdir(parents=True, exist_ok=True)
+
+    # Write an upstream blocker (as if s02_parse_intent raised it).
+    upstream_blocker = BlockerModel(
+        blocked=True,
+        raised_by_step="s02_parse_intent",
+        reason="benchmark_intent.md missing required method field",
+        detail="Could not parse method name from benchmark_intent.md",
+        evidence="benchmark_intent.md line 3: method: (empty)",
+        resolution="Fill in the method name in benchmark_intent.md and re-run.",
+        human_action_required=True,
+    )
+    ws.write_artifact("blocker", upstream_blocker)
+
+    # Write prior artifacts that would otherwise make s09 feasible.
+    ws.write_artifact("task_spec", _make_task_spec())
+    ws.write_artifact("evaluation_contract", _make_evaluation_contract())
+    ws.write_artifact("risk_audit", _make_risk_audit_no_blockers())
+    ws.write_artifact(
+        "data_manifest",
+        _make_data_manifest_available(str(real_existing_file)),
+    )
+    ws.write_artifact("repo_evidence", _make_repo_evidence_stagate())
+
+    s09_execute_or_block.run(ws)
+
+    # blocker.json must still exist
+    blocker_path = ws.artifact_path("blocker")
+    assert blocker_path.exists(), "blocker.json must still exist after s09 guard"
+
+    # blocker.json must be UNCHANGED — still the upstream blocker, not s09's
+    blocker = ws.read_artifact("blocker", Blocker)
+    assert blocker.blocked is True, (
+        f"Expected blocked=True (upstream blocker preserved), got: {blocker.blocked}"
+    )
+    assert blocker.raised_by_step == "s02_parse_intent", (
+        f"Expected raised_by_step='s02_parse_intent' (upstream), "
+        f"got: {blocker.raised_by_step!r} — s09 must NOT overwrite the upstream blocker"
+    )
+    assert blocker.reason == "benchmark_intent.md missing required method field", (
+        f"Upstream reason must be preserved, got: {blocker.reason!r}"
+    )
+
+    # execution_log.json must be written with status "not_attempted"
+    elog_path = ws.artifact_path("execution_log")
+    assert elog_path.exists(), "execution_log.json must always be written by s09"
+
+    elog = ws.read_artifact("execution_log", ExecutionLog)
+    assert elog.status == "not_attempted", (
+        f"Expected status='not_attempted', got: {elog.status!r}"
+    )
+    assert elog.stdout_excerpt == "", (
+        f"No subprocess should have run; stdout_excerpt must be empty, got: {elog.stdout_excerpt!r}"
+    )
+    assert elog.stderr_excerpt == "", (
+        f"No subprocess should have run; stderr_excerpt must be empty, got: {elog.stderr_excerpt!r}"
+    )
+    assert elog.duration_seconds is None, (
+        f"No subprocess should have run; duration_seconds must be None, got: {elog.duration_seconds!r}"
+    )
+
+    # workspace.blocked must be True
+    assert ws.blocked is True, "workspace.blocked must be True (upstream blocker preserved)"
+
+
+# ---------------------------------------------------------------------------
 # Test 2 — Feasible path (SKIPPED — real STAGATE pipeline cannot run here)
 # ---------------------------------------------------------------------------
 

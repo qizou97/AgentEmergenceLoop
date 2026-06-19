@@ -21,56 +21,56 @@
       "name": "sobench: LLM Wrapper",
       "description": "sobench/llm.py: complete(prompt, system=\"\") -> str over an OpenAI-compatible endpoint, config from .env via python-dotenv (OPENAI_BASE_URL/OPENAI_MODEL_NAME/OPENAI_API_KEY). Real-LLM test over real data/ inputs; skip with explicit reason if .env config absent.",
       "dependencies": ["feat-sobench-001"],
-      "status": "not-started",
-      "evidence": ""
+      "status": "done",
+      "evidence": "2026-06-19: sobench/llm.py; tests/test_llm.py real-endpoint test passes."
     },
     {
       "id": "feat-sobench-003",
       "name": "sobench: CLI + Scaffold Subcommand",
       "description": "sobench/cli.py (argparse, 4 subcommands) + sobench/__main__.py. scaffold creates workspaces/T/C/M/ and writes benchmark_intent.md template; run/check/report are stubs. Tests: tests/test_cli.py.",
       "dependencies": ["feat-sobench-001"],
-      "status": "not-started",
-      "evidence": ""
+      "status": "done",
+      "evidence": "2026-06-19: cli.py+__main__.py; tests/test_cli.py passes."
     },
     {
       "id": "feat-sobench-004",
       "name": "sobench: Steps s01–s04",
       "description": "s01 ensure_workspace (raises if missing), s02 parse_intent (LLM, blocker if task/method unparseable), s03 extract_paper_evidence (PDF text + LLM, blocker if paper absent), s04 inspect_repo_evidence (walk repo + LLM, never blocks). Real-task tests over data/spatial_domain_identification_task; LLM steps skip if no key.",
       "dependencies": ["feat-sobench-001", "feat-sobench-002"],
-      "status": "not-started",
-      "evidence": ""
+      "status": "done",
+      "evidence": "2026-06-19: steps s01–s04 + steps/_common.py; tests/steps/test_s01..s04 pass (real LLM)."
     },
     {
       "id": "feat-sobench-005",
       "name": "sobench: Steps s05–s08",
       "description": "s05 build_data_manifest (real Path.exists, never blocks), s06 draft_task_spec (blocker if no context), s07 draft_evaluation_contract (metric.resolved:false valid), s08 draft_risk_audit (always writes). Real-task tests; LLM steps skip if no key.",
       "dependencies": ["feat-sobench-004"],
-      "status": "not-started",
-      "evidence": ""
+      "status": "done",
+      "evidence": "2026-06-19: steps s05–s08; tests/steps/test_s05..s08 pass (real LLM); s05 real Path.exists."
     },
     {
       "id": "feat-sobench-006",
       "name": "sobench: Step s09 — Execute or Block",
       "description": "Feasibility check; subprocess exec when feasible; always writes blocker.json + execution_log.json (status not_attempted when blocked). Primary real path is blocked (DLPFC .h5ad genuinely absent under data/). Feasible path skips with reason if the real command cannot run here.",
       "dependencies": ["feat-sobench-005"],
-      "status": "not-started",
-      "evidence": ""
+      "status": "done",
+      "evidence": "2026-06-19: step s09; tests/steps/test_s09 blocked path + upstream-blocker-preserved pass (feasible skipped, heavy deps). Upstream blocker guard added 2026-06-19."
     },
     {
       "id": "feat-sobench-007",
       "name": "sobench: Steps s10–s12",
       "description": "s10 record_raw_observations, s11 audit_result_validity, s12 write_interpretation. s10/s11/s12 skip when workspace.blocked; s12 additionally runs when execution attempted but result invalid (benchmark_result_claimed:false). Real-task tests.",
       "dependencies": ["feat-sobench-006"],
-      "status": "not-started",
-      "evidence": ""
+      "status": "done",
+      "evidence": "2026-06-19: steps s10–s12; tests/steps/test_s10..s12 pass (real LLM); skip-when-blocked verified."
     },
     {
       "id": "feat-sobench-008",
       "name": "sobench: Steps s13–s14",
       "description": "s13 write_experience_record (always runs, status=hypothesis, captures blocker learning), s14 structural_check (pure Python; passed:false only when missing_unacknowledged non-empty; blocker excuses s10/s11/s12). s13 real-LLM test skips if no key; s14 pure-Python.",
       "dependencies": ["feat-sobench-007"],
-      "status": "not-started",
-      "evidence": ""
+      "status": "done",
+      "evidence": "2026-06-19: steps s13–s14; tests/steps/test_s13 (real LLM) + test_s14 (deterministic) pass."
     },
     {
       "id": "feat-sobench-009",

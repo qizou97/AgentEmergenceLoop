@@ -266,7 +266,18 @@ def run(workspace: Workspace) -> None:
     Reads: task_spec.json, evaluation_contract.json, risk_audit.json,
            data_manifest.json, repo_evidence.json (all via workspace.read_artifact).
     Always writes: blocker.json, execution_log.json.
+
+    Guard: if an upstream step has already set blocked:true in blocker.json,
+    preserve it and write execution_log with status="not_attempted". Do not
+    overwrite the upstream blocker or launch a subprocess.
     """
+    # Guard: respect an upstream blocker raised before s09 runs.
+    existing_blocker = workspace.read_blocker()
+    if existing_blocker is not None and existing_blocker.blocked:
+        # Preserve blocker.json as-is; do not overwrite it.
+        _write_not_attempted(workspace, "")
+        return
+
     task_spec = workspace.read_artifact("task_spec", TaskSpec)
     ec = workspace.read_artifact("evaluation_contract", EvaluationContract)
     ra = workspace.read_artifact("risk_audit", RiskAudit)
