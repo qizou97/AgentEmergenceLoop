@@ -46,6 +46,7 @@ Provenance: data/spatial_domain_identification_task/ (STAGATE repo + papers)
 
 from __future__ import annotations
 
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -256,7 +257,7 @@ def _make_experience_record() -> ExperienceRecord:
         confidence="high",
         failure_conditions=[],
         status="hypothesis",
-        created="2026-06-19",
+        created=date.today().isoformat(),
     )
 
 
@@ -423,7 +424,8 @@ def test_s14_passed_false_missing_post_exec_without_blocker(tmp_path):
     Post-exec artifacts are only excused when blocked:true.
 
     Fixture: NOT-blocked workspace, all required-always artifacts present,
-    raw_observations ABSENT (unexcused).
+    but raw_observations, result_validity_audit, AND interpretation are all
+    absent (not blocked → all three are unacknowledged missing).
     """
     from sobench.steps import s14_structural_check
 
@@ -440,8 +442,8 @@ def test_s14_passed_false_missing_post_exec_without_blocker(tmp_path):
     ws.write_artifact("blocker", _make_blocker_not_blocked())
     ws.write_artifact("execution_log", _make_execution_log_not_attempted())
     ws.write_artifact("experience_record", _make_experience_record())
-    # raw_observations ABSENT (no blocker to excuse it)
-    # result_validity_audit + interpretation also absent
+    # raw_observations, result_validity_audit, AND interpretation all ABSENT
+    # (no blocker to excuse them — all three are unacknowledged)
 
     s14_structural_check.run(ws)
 

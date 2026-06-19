@@ -16,6 +16,7 @@ the blocker (spec 7.13 blocked-cycle example).
 from __future__ import annotations
 
 import json as _json
+import logging
 from datetime import date
 
 from sobench.workspace import Workspace
@@ -103,7 +104,7 @@ def _collect_artifacts(workspace: Workspace) -> dict:
             try:
                 result[name] = workspace.read_artifact(name, cls).to_dict()
             except Exception:
-                pass
+                logging.warning("s13: could not load %s, skipping", name)
     return result
 
 

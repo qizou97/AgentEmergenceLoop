@@ -76,6 +76,8 @@ def run(workspace: Workspace) -> None:
 
     checks = []
     missing_unacknowledged = []
+    # Capture loaded objects for reuse in derived-fields section
+    _loaded: dict = {}
 
     # --- benchmark_intent.md (presence only) ---
     checks.append(_check_markdown_artifact(workspace, "benchmark_intent.md"))
@@ -94,7 +96,17 @@ def run(workspace: Workspace) -> None:
         ("execution_log", ExecutionLog),
     ]
     for name, cls in required_always:
-        entry = _check_json_artifact(workspace, name, cls)
+        path = workspace.artifact_path(name)
+        if not path.exists():
+            entry = {"artifact": f"{name}.json", "present": False}
+        else:
+            try:
+                obj = workspace.read_artifact(name, cls)
+                obj.validate()
+                _loaded[name] = obj
+                entry = {"artifact": f"{name}.json", "present": True, "valid": True}
+            except Exception:
+                entry = {"artifact": f"{name}.json", "present": True, "valid": False}
         checks.append(entry)
         if not entry["present"] or entry.get("valid") is False:
             missing_unacknowledged.append(f"{name}.json")
@@ -113,7 +125,16 @@ def run(workspace: Workspace) -> None:
             checks.append(entry)
             # NOT added to missing_unacknowledged — excused
         else:
-            entry = _check_json_artifact(workspace, name, cls)
+            if not path.exists():
+                entry = {"artifact": f"{name}.json", "present": False}
+            else:
+                try:
+                    obj = workspace.read_artifact(name, cls)
+                    obj.validate()
+                    _loaded[name] = obj
+                    entry = {"artifact": f"{name}.json", "present": True, "valid": True}
+                except Exception:
+                    entry = {"artifact": f"{name}.json", "present": True, "valid": False}
             checks.append(entry)
             if not entry["present"] or entry.get("valid") is False:
                 missing_unacknowledged.append(f"{name}.json")
@@ -127,31 +148,19 @@ def run(workspace: Workspace) -> None:
     # --- structural_check.json itself (being written now — mark present:true) ---
     checks.append({"artifact": "structural_check.json", "present": True})
 
-    # --- Derived fields ---
+    # --- Derived fields (reuse objects loaded during checks — no second disk read) ---
     passed = len(missing_unacknowledged) == 0
     structurally_complete = passed  # same logic per spec
 
     completed_with_blocker = is_blocked
 
-    # execution_attempted: True when execution_log.status != "not_attempted"
-    execution_attempted = False
-    elog_path = workspace.artifact_path("execution_log")
-    if elog_path.exists():
-        try:
-            elog = workspace.read_artifact("execution_log", ExecutionLog)
-            execution_attempted = (elog.status != "not_attempted")
-        except Exception:
-            pass
+    # execution_attempted: True when execution_log present AND status != "not_attempted"
+    elog = _loaded.get("execution_log")
+    execution_attempted = (elog is not None and elog.status != "not_attempted")
 
     # benchmark_result_claimed: from interpretation.benchmark_result_claimed if present
-    benchmark_result_claimed = False
-    interp_path = workspace.artifact_path("interpretation")
-    if interp_path.exists():
-        try:
-            interp = workspace.read_artifact("interpretation", Interpretation)
-            benchmark_result_claimed = bool(interp.benchmark_result_claimed)
-        except Exception:
-            pass
+    interp = _loaded.get("interpretation")
+    benchmark_result_claimed = bool(interp.benchmark_result_claimed) if interp is not None else False
 
     # --- Warnings ---
     warnings = []
