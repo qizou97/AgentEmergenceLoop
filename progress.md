@@ -2,7 +2,7 @@
 
 ## Current State
 
-**Last Updated:** 2026-06-19
+**Last Updated:** 2026-06-19 (direction update)
 **Active Feature:** none — ready to begin feat-sobench-001
 
 ## Project
@@ -65,3 +65,14 @@ The 14-step loop reconstructs what benchmark a method paper intended, audits val
 ## Documentation Update (2026-06-18)
 
 - Added Implementation Reuse Rule and Behavioral Coding Guidelines to `AGENTS.md`.
+
+## Direction Update (2026-06-19)
+
+Scope narrowed to one minimal vertical slice. The project is not a generic scientific agent and not an automatic benchmark runner. The single current target is: reconstruct one spatial-omics benchmark task from local paper/code/data context, produce auditable evidence, attempt execution or record a blocker, write a scoped experience note.
+
+Changes made:
+- Created `README.md` with project identity, in-scope / out-of-scope, and next concrete task.
+- Collapsed `feature_list.json` from 10 placeholder items to 3 concrete work items (feat-sobench-001/002/003) plus the completed feat-001.
+- `./init.sh` passed (1 test, 0 compile errors).
+
+**Next action:** implement feat-sobench-001 (models + workspace): write tests first, then `sobench/models.py` and `sobench/workspace.py`, verify with `python -m pytest tests/test_models.py tests/test_workspace.py`.
