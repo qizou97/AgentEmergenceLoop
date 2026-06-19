@@ -2,59 +2,66 @@
 
 ## Current State
 
-**Last Updated:** 2026-06-16 14:15 CST
-**Active Feature:** feat-001 - Project Setup
+**Last Updated:** 2026-06-19
+**Active Feature:** none — ready to begin feat-sobench-001
+
+## Project
+
+**sobench** — evidence-guided, reproducible spatial-omics benchmark construction agent.
+
+Design spec committed at `docs/superpowers/specs/2026-06-19-sobench-design.md` (commit `486cc62`).
+Implementation plan at `docs/superpowers/plans/2026-06-19-sobench.md`.
+
+The 14-step loop reconstructs what benchmark a method paper intended, audits validity, attempts execution, diagnoses blockers, and records scoped experience.
 
 ## Status
 
 ### What's Done
 
-- [x] Added a minimal pytest smoke test so `./init.sh` has a passing test target.
-- [x] Added `.gitignore` entries for generated Python caches and packaging outputs.
-- [x] Verified `python -m compileall .` completes successfully.
-- [x] Initialized git metadata, created the first commit, and pushed `main` to `origin`.
+- [x] Harness bootstrap: smoke test, .gitignore, `./init.sh` passing (feat-001).
+- [x] Design spec for sobench: 14-step loop, 15 artifacts, 4 CLI subcommands, workspace layout, runner control flow, staged experience loop.
+- [x] Implementation plan decomposed into 10 one-feature-at-a-time steps with TDD steps, file lists, verification commands.
+- [x] `feature_list.json` reset with sobench feature set.
+- [x] `progress.md` reset for sobench project.
 
 ### What's In Progress
 
 - [ ] No active implementation work.
-  - Details: Baseline repository setup and publication are complete.
-  - Blockers: None.
+  - Next: feat-sobench-001 (package skeleton: models + workspace)
 
 ### What's Next
 
-1. Run `./init.sh` again and confirm the full harness passes.
-2. Pick the next unfinished feature from `feature_list.json`.
+1. Run `./init.sh` to confirm baseline is clean.
+2. Pick feat-sobench-001 and follow plan: write tests first, then implement.
+3. Verify with `python -m pytest tests/test_models.py tests/test_workspace.py`.
 
 ## Blockers / Risks
 
-- [x] Repository bootstrap: no usable git metadata existed in the provided checkout.
-- [x] Remote publication: completed successfully to `git@github.com:qizou97/AgentEmergenceLoop.git`.
+- None currently.
+- Potential risk: LLM API key required for `sobench/llm.py`. All step tests mock `llm.complete` so this only blocks manual end-to-end runs, not the test suite.
 
 ## Decisions Made
 
-- **Use a smoke test for baseline verification**: The harness requires `pytest`, but the repository had zero tests and `pytest` exits with code 5 in that case.
-  - Context: The smallest fix that restores the required startup workflow is a repository smoke test.
-  - Alternatives considered: Leaving `init.sh` failing or weakening the verification command.
+- **Design first, implement one feature at a time**: Full design reviewed and approved before any code. Each feature has TDD steps; tests written before implementation.
+- **blocker.json always written**: `blocked: false` when clear. Absence would require structural_check to infer state indirectly — always-written is simpler and auditable.
+- **Missing repo/data never a blocker at discovery steps**: s04 records missing repo in `missing` field; s05 records unavailable data with `available: false`. Only s09 decides whether to block.
+- **s12 skip condition**: skipped only when `workspace.blocked AND execution_log.status == "not_attempted"`. Writes minimal interpretation when execution ran but validity failed.
+- **coordinate fields are free-form strings**: no fixed taxonomy at P0. Schema will evolve from repeated task evidence.
 
-## Files Modified This Session
+## Files Modified in Design Session (2026-06-19)
 
-- `.gitignore` - Ignore generated caches and packaging outputs.
-- `tests/test_repository_smoke.py` - Add minimal pytest coverage for harness verification.
-- `feature_list.json` - Mark project setup complete with verification evidence.
-- `progress.md` - Record current session state and remaining publication step.
-
-## Evidence of Completion
-
-- [x] Tests pass: `./init.sh`
-- [ ] Type check clean: not configured in this repository
-- [x] Manual verification: initial commit `577f9c0` pushed to `origin/main`
-
-## Notes for Next Session
-
-Proceed with `feat-002` or revise the feature list so the next implementation target is concrete.
+- `docs/superpowers/specs/2026-06-19-sobench-design.md` — approved design spec (committed `486cc62`)
+- `docs/superpowers/plans/2026-06-19-sobench.md` — implementation plan
+- `feature_list.json` — reset for sobench project
+- `progress.md` — this file
 
 ---
 
-## 2026-06-18 — Documentation Update
+## Previous Bootstrap Session (2026-06-16)
 
-Added Implementation Reuse Rule and Behavioral Coding Guidelines (Think Before Coding, Simplicity First, Surgical Changes, Goal-Driven Execution) to `AGENTS.md`. No code was changed. Baseline `init.sh` failure (missing `pytest` in active env) is pre-existing and unrelated to this update.
+- Added smoke test, .gitignore, published repository to origin/main.
+- Feat-001 (Project Setup): done.
+
+## Documentation Update (2026-06-18)
+
+- Added Implementation Reuse Rule and Behavioral Coding Guidelines to `AGENTS.md`.

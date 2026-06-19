@@ -9,34 +9,82 @@
       "evidence": "2026-06-16: Added smoke pytest coverage and .gitignore; `./init.sh` passed locally after repository bootstrap."
     },
     {
-      "id": "feat-002",
-      "name": "First User-Facing Feature",
-      "description": "Replace this placeholder with the first concrete behavior the agent should implement",
+      "id": "feat-sobench-001",
+      "name": "sobench: Package Skeleton — Models + Workspace",
+      "description": "All 15 artifact dataclasses (from_dict/to_dict/validate) and Workspace class (path resolution, artifact I/O, blocked property). Foundation layer for all steps.",
       "dependencies": ["feat-001"],
       "status": "not-started",
       "evidence": ""
     },
     {
-      "id": "feat-003",
-      "name": "Verification Coverage",
-      "description": "Add or confirm tests, type checks, linting, or manual verification for the active feature",
-      "dependencies": ["feat-002"],
+      "id": "feat-sobench-002",
+      "name": "sobench: LLM Wrapper",
+      "description": "Thin mockable wrapper: llm.complete(prompt) -> str. Single point of LLM coupling; all step tests mock this function.",
+      "dependencies": ["feat-sobench-001"],
       "status": "not-started",
       "evidence": ""
     },
     {
-      "id": "feat-004",
-      "name": "Documentation Update",
-      "description": "Update README, architecture notes, or product docs affected by the implemented feature",
-      "dependencies": ["feat-003"],
+      "id": "feat-sobench-003",
+      "name": "sobench: CLI + Scaffold Subcommand",
+      "description": "sobench scaffold creates workspace dir and benchmark_intent.md template. run/check/report stubs registered.",
+      "dependencies": ["feat-sobench-001"],
       "status": "not-started",
       "evidence": ""
     },
     {
-      "id": "feat-005",
-      "name": "Cleanup and Handoff",
-      "description": "Record verification evidence, update progress.md, and leave a clear next-session path",
-      "dependencies": ["feat-004"],
+      "id": "feat-sobench-004",
+      "name": "sobench: Steps s01–s04",
+      "description": "s01 ensure_workspace, s02 parse_intent, s03 extract_paper_evidence, s04 inspect_repo_evidence. s04 never sets blocker.",
+      "dependencies": ["feat-sobench-001", "feat-sobench-002"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "feat-sobench-005",
+      "name": "sobench: Steps s05–s08",
+      "description": "s05 build_data_manifest (real Path.exists checks), s06 draft_task_spec, s07 draft_evaluation_contract, s08 draft_risk_audit.",
+      "dependencies": ["feat-sobench-004"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "feat-sobench-006",
+      "name": "sobench: Step s09 — Execute or Block",
+      "description": "Feasibility check. Runs command via subprocess when feasible. Always writes blocker.json and execution_log.json.",
+      "dependencies": ["feat-sobench-005"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "feat-sobench-007",
+      "name": "sobench: Steps s10–s12",
+      "description": "s10 raw_observations, s11 result_validity_audit, s12 interpretation. All skip when workspace.blocked (pre-execution). s12 writes minimal interpretation when execution ran but validity failed.",
+      "dependencies": ["feat-sobench-006"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "feat-sobench-008",
+      "name": "sobench: Steps s13–s14",
+      "description": "s13 experience_record (always runs; status always 'hypothesis'). s14 structural_check (always runs; no LLM; passed:false only when missing_unacknowledged non-empty).",
+      "dependencies": ["feat-sobench-007"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "feat-sobench-009",
+      "name": "sobench: Runner + CLI run/check/report",
+      "description": "runner.py calls all 14 steps with SKIP_WHEN_BLOCKED logic for s10/s11/s12. Wires sobench run, check, report subcommands.",
+      "dependencies": ["feat-sobench-008", "feat-sobench-003"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "feat-sobench-010",
+      "name": "sobench: Integration Smoke Test",
+      "description": "End-to-end test over synthetic workspace (LLM mocked). Confirms structural_check.json passed:true for a blocked cycle.",
+      "dependencies": ["feat-sobench-009"],
       "status": "not-started",
       "evidence": ""
     }
