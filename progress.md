@@ -114,6 +114,27 @@ Changes made:
 - Not-blocked path cannot be produced (real .h5ad absent). Covered structurally by STEPS order
   test + the real blocked run showing s01–s09 + s13 + s14 all execute.
 
+## feat-sobench-010 DONE (2026-06-19)
+
+- Created `tests/fixtures/intent_stagate_dlpfc.md`: provenance-headed fixture derived from
+  the real `data/spatial_domain_identification_task/` task. Provenance header in the file
+  identifies the source dir, real paper path, real repo path, and DLPFC .h5ad absence.
+  Standard sections: Task/Method/Case/Paper/Repository/Data/What to reconstruct/Human observations.
+- Created `tests/test_integration.py`: end-to-end test driven from the fixture file.
+  Skip gates: OPENAI_API_KEY absent OR real paper/repo absent (both present → test MUST run).
+  Assertions: workspace.blocked True; blocker.json exists + blocked:true + non-empty reason;
+  execution_log.json status=="not_attempted"; structural_check.json passed==True;
+  experience_record.json status=="hypothesis" + evidence non-empty; all 6 auditable-package
+  artifacts present; data_manifest.required has at least one available:false (real .h5ad absent);
+  s10/s11/s12 artifacts DO NOT exist; executed list == EXPECTED_BLOCKED_EXECUTED.
+  RESULT: RAN (not skipped), PASSED in 157s.
+- Fixed `sobench/llm.py` max_tokens 4096→8192: pre-existing flaky failure in
+  test_runner.py::test_real_blocked_pipeline where s08 prompt (with all prior artifacts) caused
+  response truncation and JSON extraction failure. Fix resolves it.
+- Full ./init.sh: **96 passed, 1 skipped** in 794s (0:13:14). The 1 skipped is the known s09
+  feasible-path skip (always expected). No test failures.
+- Commit: 2664b3c "test(sobench): add end-to-end integration smoke test"
+
 ## Implementation Session (2026-06-19, subagent-driven, real-LLM)
 
 Re-expanded `feature_list.json` from the 3 narrowed items back to the plan's 10 features

@@ -85,8 +85,8 @@
       "name": "sobench: Integration Smoke Test (real task)",
       "description": "End-to-end real-task test: intent fixture derived from data/ (provenance header, real paper/repo paths), real LLM, real blocked cycle (no .h5ad). Asserts structural_check passed:true, experience_record status=hypothesis with real evidence refs, blocker blocked:true with real reason, execution_log status=not_attempted. Skips with explicit reason if no key or real data absent.",
       "dependencies": ["feat-sobench-009"],
-      "status": "not-started",
-      "evidence": ""
+      "status": "done",
+      "evidence": "2026-06-19: tests/fixtures/intent_stagate_dlpfc.md (provenance header) + tests/test_integration.py created. Integration test RAN (not skipped) + PASSED in 157s. Also fixed sobench/llm.py max_tokens 4096→8192 to prevent s08 JSON truncation on accumulated-artifact prompts (pre-existing flaky failure in test_runner.py::test_real_blocked_pipeline now resolved). ./init.sh: 96 passed, 1 skipped in 794s. commit 2664b3c."
     }
   ]
 }
