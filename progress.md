@@ -52,3 +52,9 @@
 ## Notes for Next Session
 
 Proceed with `feat-002` or revise the feature list so the next implementation target is concrete.
+
+---
+
+## 2026-06-18 — Documentation Update
+
+Added Implementation Reuse Rule and Behavioral Coding Guidelines (Think Before Coding, Simplicity First, Surgical Changes, Goal-Driven Execution) to `AGENTS.md`. No code was changed. Baseline `init.sh` failure (missing `pytest` in active env) is pre-existing and unrelated to this update.
