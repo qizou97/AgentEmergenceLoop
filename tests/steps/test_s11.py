@@ -12,7 +12,7 @@ Test 1 (primary, deterministic — MUST RUN, no skip):
   Assert s11 writes NO result_validity_audit.json.
   No LLM, no skip allowed.
 
-Test 2 (not-blocked path — LLM required; skipped if ANTHROPIC_API_KEY absent):
+Test 2 (not-blocked path — LLM required; skipped if OPENAI_API_KEY absent):
   Build a NOT-blocked workspace with real raw_observations.json, task_spec.json,
   evaluation_contract.json (all real-task-derived).
   Assert result_validity_audit.json is written with required fields.
@@ -175,15 +175,12 @@ def test_s11_no_artifact_when_blocked(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# Test 2 — Not-blocked path (LLM required; skipped if ANTHROPIC_API_KEY absent)
+# Test 2 — Not-blocked path (LLM required; skipped if OPENAI_API_KEY absent)
 # ---------------------------------------------------------------------------
 
 @pytest.mark.skipif(
-    not os.environ.get("ANTHROPIC_API_KEY"),
-    reason=(
-        "Not-blocked path requires LLM call (ANTHROPIC_API_KEY absent). "
-        "Set ANTHROPIC_API_KEY to exercise this path."
-    ),
+    not os.environ.get("OPENAI_API_KEY"),
+    reason="OPENAI_API_KEY not set — LLM tests skipped",
 )
 def test_s11_writes_audit_when_not_blocked(tmp_path):
     """

@@ -327,11 +327,8 @@ def test_s12_no_artifact_when_blocked_not_attempted(tmp_path):
 # ---------------------------------------------------------------------------
 
 @pytest.mark.skipif(
-    not os.environ.get("ANTHROPIC_API_KEY"),
-    reason=(
-        "result_valid:false path requires LLM call (ANTHROPIC_API_KEY absent). "
-        "Set ANTHROPIC_API_KEY to exercise this path."
-    ),
+    not os.environ.get("OPENAI_API_KEY"),
+    reason="OPENAI_API_KEY not set — LLM tests skipped",
 )
 def test_s12_minimal_interpretation_when_validity_failed(tmp_path):
     """
@@ -389,11 +386,8 @@ def test_s12_minimal_interpretation_when_validity_failed(tmp_path):
 # ---------------------------------------------------------------------------
 
 @pytest.mark.skipif(
-    not os.environ.get("ANTHROPIC_API_KEY"),
-    reason=(
-        "result_valid:true path requires LLM call (ANTHROPIC_API_KEY absent). "
-        "Set ANTHROPIC_API_KEY to exercise this path."
-    ),
+    not os.environ.get("OPENAI_API_KEY"),
+    reason="OPENAI_API_KEY not set — LLM tests skipped",
 )
 def test_s12_full_interpretation_when_result_valid(tmp_path):
     """

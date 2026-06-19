@@ -116,15 +116,12 @@ def test_s10_no_artifact_when_blocked(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# Test 2 — Not-blocked path (LLM required; skipped if ANTHROPIC_API_KEY absent)
+# Test 2 — Not-blocked path (LLM required; skipped if OPENAI_API_KEY absent)
 # ---------------------------------------------------------------------------
 
 @pytest.mark.skipif(
-    not os.environ.get("ANTHROPIC_API_KEY"),
-    reason=(
-        "Not-blocked path requires LLM call (ANTHROPIC_API_KEY absent). "
-        "Set ANTHROPIC_API_KEY to exercise this path."
-    ),
+    not os.environ.get("OPENAI_API_KEY"),
+    reason="OPENAI_API_KEY not set — LLM tests skipped",
 )
 def test_s10_writes_raw_observations_when_not_blocked(tmp_path):
     """
