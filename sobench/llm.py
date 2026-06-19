@@ -72,4 +72,4 @@ def complete(prompt: str, system: str = "") -> str:
         max_tokens=4096,
     )
 
-    return response.choices[0].message.content
+    return response.choices[0].message.content or ""
