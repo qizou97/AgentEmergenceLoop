@@ -3,9 +3,9 @@ sobench/cli.py — argparse CLI with four subcommands.
 
 Subcommands:
   scaffold  — creates workspace directory and writes benchmark_intent.md
-  run       — stub (not yet implemented)
-  check     — stub (not yet implemented)
-  report    — stub (not yet implemented)
+  run       — execute all 14 benchmark steps for a workspace
+  check     — run s14 structural check standalone against an existing workspace
+  report    — print human-readable summary from completed workspace artifacts
 
 Usage:
   python -m sobench scaffold --task T --method M --case C [--root R] [--paper P] [--repo R] [--data D]
@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Optional
 
 from sobench.workspace import Workspace
+from sobench.models import ExperienceRecord, StructuralCheck
 
 # ---------------------------------------------------------------------------
 # Template
@@ -101,21 +102,83 @@ def _cmd_scaffold(args: argparse.Namespace) -> int:
 
 
 # ---------------------------------------------------------------------------
-# stubs
+# run / check / report
 # ---------------------------------------------------------------------------
 
-def _cmd_run(_args: argparse.Namespace) -> int:
-    print("not yet implemented")
+def _cmd_run(args: argparse.Namespace) -> int:
+    """Execute all 14 steps for the given workspace via runner.run()."""
+    from sobench import runner
+
+    ws = Workspace(task=args.task, method=args.method, case=args.case, root=args.root)
+    executed = runner.run(ws)
+
+    skipped = [name for name, _ in runner.STEPS if name not in executed]
+    print(f"Run complete: {args.task}/{args.case}/{args.method}")
+    print(f"  Steps executed ({len(executed)}): {', '.join(executed)}")
+    if skipped:
+        print(f"  Steps skipped ({len(skipped)}): {', '.join(skipped)}")
+    if ws.blocked:
+        blocker = ws.read_blocker()
+        print(f"  Blocked: {blocker.reason}")
+    else:
+        print("  Blocked: False")
     return 0
 
 
-def _cmd_check(_args: argparse.Namespace) -> int:
-    print("not yet implemented")
-    return 0
+def _cmd_check(args: argparse.Namespace) -> int:
+    """Run s14 structural check standalone against an existing workspace."""
+    from sobench.steps import s14_structural_check
+
+    ws = Workspace(task=args.task, method=args.method, case=args.case, root=args.root)
+    s14_structural_check.run(ws)
+
+    sc_path = ws.artifact_path("structural_check")
+    if not sc_path.exists():
+        print("error: structural_check.json was not written", file=sys.stderr)
+        return 1
+
+    sc = ws.read_artifact("structural_check", StructuralCheck)
+    status = "PASSED" if sc.passed else "FAILED"
+    print(f"Structural check {status}: {args.task}/{args.case}/{args.method}")
+    if sc.missing_unacknowledged:
+        print(f"  Missing unacknowledged: {', '.join(sc.missing_unacknowledged)}")
+    else:
+        print("  Missing unacknowledged: none")
+    if sc.warnings:
+        for w in sc.warnings:
+            print(f"  Warning: {w}")
+    return 0 if sc.passed else 1
 
 
-def _cmd_report(_args: argparse.Namespace) -> int:
-    print("not yet implemented")
+def _cmd_report(args: argparse.Namespace) -> int:
+    """Print a human-readable summary from completed workspace artifacts."""
+    ws = Workspace(task=args.task, method=args.method, case=args.case, root=args.root)
+
+    sc_path = ws.artifact_path("structural_check")
+    exp_path = ws.artifact_path("experience_record")
+
+    if not sc_path.exists() or not exp_path.exists():
+        missing = []
+        if not sc_path.exists():
+            missing.append("structural_check.json")
+        if not exp_path.exists():
+            missing.append("experience_record.json")
+        print(
+            f"error: required artifacts not found in {ws.dir}: {', '.join(missing)}",
+            file=sys.stderr,
+        )
+        return 1
+
+    sc = ws.read_artifact("structural_check", StructuralCheck)
+    exp = ws.read_artifact("experience_record", ExperienceRecord)
+
+    print(f"Report: {args.task}/{args.case}/{args.method}")
+    print(f"  passed:                   {sc.passed}")
+    print(f"  completed_with_blocker:   {sc.completed_with_blocker}")
+    print(f"  execution_attempted:      {sc.execution_attempted}")
+    print(f"  benchmark_result_claimed: {sc.benchmark_result_claimed}")
+    print(f"  experience finding:       {exp.finding}")
+    print(f"  experience status:        {exp.status}")
     return 0
 
 
@@ -171,7 +234,7 @@ def _build_parser() -> argparse.ArgumentParser:
     # run
     p_run = subparsers.add_parser(
         "run",
-        help="Run all 14 benchmark steps (not yet implemented).",
+        help="Execute all 14 benchmark steps for the specified workspace.",
     )
     _add_identity(p_run)
     p_run.set_defaults(func=_cmd_run)
@@ -179,7 +242,7 @@ def _build_parser() -> argparse.ArgumentParser:
     # check
     p_check = subparsers.add_parser(
         "check",
-        help="Run structural check (s14) standalone (not yet implemented).",
+        help="Run structural check (s14) standalone against an existing workspace.",
     )
     _add_identity(p_check)
     p_check.set_defaults(func=_cmd_check)
@@ -187,7 +250,7 @@ def _build_parser() -> argparse.ArgumentParser:
     # report
     p_report = subparsers.add_parser(
         "report",
-        help="Print human-readable summary from completed artifacts (not yet implemented).",
+        help="Print human-readable summary from completed workspace artifacts.",
     )
     _add_identity(p_report)
     p_report.set_defaults(func=_cmd_report)

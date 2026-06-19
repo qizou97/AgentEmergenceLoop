@@ -97,6 +97,23 @@ Changes made:
 - Concern: plan says "15 dataclasses" but spec section 7 lists 14 JSON artifacts.
   benchmark_intent.md is human-authored markdown, not a JSON artifact. Implemented 14.
 
+## feat-sobench-009 DONE (2026-06-19)
+
+- Implemented `sobench/runner.py`: STEPS list (s01→s14, 14 entries), SKIP_WHEN_BLOCKED set,
+  `run(workspace)` returns ordered list of executed step names.
+- `workspace.blocked` is re-evaluated each iteration from disk — once s09 writes blocked:true
+  the skip checks see it on the very next step.
+- Replaced CLI stubs (run/check/report printed "not yet implemented") with real wired functions:
+  `_cmd_run` calls `runner.run()` and prints step summary; `_cmd_check` calls s14 standalone and
+  returns 0/non-zero based on `sc.passed`; `_cmd_report` reads structural_check.json +
+  experience_record.json and prints human-readable summary, exits non-zero gracefully if absent.
+- TDD: runner static tests first (RED: ImportError), then runner.py implemented (GREEN: 3 pass),
+  then real pipeline test (real blocked-cycle ran in 2:28, PASSED).
+- Updated 3 stale CLI stub tests; added 7 new CLI tests (check/report/run) — all real behavior.
+- All 4 runner tests + 15 CLI tests pass. `python -m compileall` clean. 96 tests collected.
+- Not-blocked path cannot be produced (real .h5ad absent). Covered structurally by STEPS order
+  test + the real blocked run showing s01–s09 + s13 + s14 all execute.
+
 ## Implementation Session (2026-06-19, subagent-driven, real-LLM)
 
 Re-expanded `feature_list.json` from the 3 narrowed items back to the plan's 10 features

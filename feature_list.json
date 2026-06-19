@@ -77,8 +77,8 @@
       "name": "sobench: Runner + CLI run/check/report",
       "description": "runner.py calls all 14 steps in order with SKIP_WHEN_BLOCKED (s10/s11/s12 skip when blocked; s13/s14 always run). Wire run/check/report into CLI. Tests verify skip logic and ordering against the real task.",
       "dependencies": ["feat-sobench-008", "feat-sobench-003"],
-      "status": "not-started",
-      "evidence": ""
+      "status": "done",
+      "evidence": "2026-06-19: runner.py implemented (STEPS s01→s14, SKIP_WHEN_BLOCKED, returns executed list). CLI stubs replaced with real run/check/report. 4 runner tests pass (3 static + 1 real blocked pipeline, 2:28); 15 CLI tests pass (14 non-LLM + 1 real run, 2:14). python -m compileall clean. 96 tests collected."
     },
     {
       "id": "feat-sobench-010",
