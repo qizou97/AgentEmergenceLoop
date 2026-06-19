@@ -80,7 +80,8 @@ def test_s03_happy_path(tmp_path):
     assert pe.task, f"task field empty: {pe.task!r}"
     assert pe.method, f"method field empty: {pe.method!r}"
     assert pe.source, f"source field empty: {pe.source!r}"
-    # evaluation_contexts should be a list (may be empty if LLM found nothing, but likely non-empty)
+    # evaluation_contexts must be a list; an empty list is accepted (LLM may legitimately
+    # extract no contexts from a given paper section — do not assert len > 0)
     assert isinstance(pe.evaluation_contexts, list), "evaluation_contexts must be a list"
     # Paper evidence written → no blocker from s03 on happy path
     assert not ws.blocked, "s03 should not set blocker when PDF is readable"

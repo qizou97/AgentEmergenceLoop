@@ -109,7 +109,5 @@ def test_s04_repo_absent_writes_artifact_no_blocker(tmp_path):
     # CRITICAL: s04 must NEVER set a blocker
     assert not ws.blocked, "s04 must NEVER set a blocker (missing repo is risk, not cycle blocker)"
 
-    # Blocker file itself should not exist or have blocked: false
-    blocker = ws.read_blocker()
-    if blocker is not None:
-        assert blocker.blocked is False, "blocker.blocked must be false if blocker.json written by s04"
+    # blocker.json must not exist at all — s04 never writes it
+    assert ws.read_blocker() is None, "s04 must never write blocker.json"

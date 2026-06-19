@@ -59,7 +59,7 @@ def llm_json(prompt: str, system: str = "") -> dict:
         pass
 
     # Attempt 2: strip ```json ... ``` fences
-    fence_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", stripped, re.DOTALL)
+    fence_match = re.search(r"```(?:json)?\s*(\{.*\})\s*```", stripped, re.DOTALL)
     if fence_match:
         try:
             result = json.loads(fence_match.group(1))

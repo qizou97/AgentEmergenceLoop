@@ -143,7 +143,7 @@ def run(workspace: Workspace) -> None:
             if not repo_path_str
             else f"repo path does not exist: {repo_path}"
         )
-        re = RepoEvidence(
+        repo_ev = RepoEvidence(
             task=pi.task,
             method=pi.method,
             entry_points=[],
@@ -156,7 +156,7 @@ def run(workspace: Workspace) -> None:
             ambiguities=[],
             missing=[f"repository not accessible: {missing_desc}"],
         )
-        workspace.write_artifact("repo_evidence", re)
+        workspace.write_artifact("repo_evidence", repo_ev)
         # NEVER set blocker — missing repo is a risk, not a cycle blocker
         return
 
@@ -182,7 +182,7 @@ def run(workspace: Workspace) -> None:
     )
     data = llm_json(prompt, system=_SYSTEM)
 
-    re = RepoEvidence(
+    repo_ev = RepoEvidence(
         task=data.get("task", pi.task),
         method=data.get("method", pi.method),
         entry_points=data.get("entry_points", []),
@@ -196,5 +196,5 @@ def run(workspace: Workspace) -> None:
         missing=data.get("missing", []),
     )
 
-    workspace.write_artifact("repo_evidence", re)
+    workspace.write_artifact("repo_evidence", repo_ev)
     # NEVER set blocker from s04
