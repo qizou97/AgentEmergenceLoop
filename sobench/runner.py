@@ -8,6 +8,8 @@ the ordered list of executed step names for observability.
 
 from __future__ import annotations
 
+from typing import Callable
+
 from sobench.workspace import Workspace
 from sobench.steps import (
     s01_ensure_workspace,
@@ -35,7 +37,7 @@ SKIP_WHEN_BLOCKED = {
 }
 
 # Ordered list of (name, run_callable) pairs.  Must be s01→s14.
-STEPS: list[tuple[str, object]] = [
+STEPS: list[tuple[str, Callable[[Workspace], None]]] = [
     ("s01_ensure_workspace",      s01_ensure_workspace.run),
     ("s02_parse_intent",          s02_parse_intent.run),
     ("s03_extract_paper_evidence", s03_extract_paper_evidence.run),

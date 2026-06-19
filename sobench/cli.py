@@ -117,8 +117,8 @@ def _cmd_run(args: argparse.Namespace) -> int:
     print(f"  Steps executed ({len(executed)}): {', '.join(executed)}")
     if skipped:
         print(f"  Steps skipped ({len(skipped)}): {', '.join(skipped)}")
-    if ws.blocked:
-        blocker = ws.read_blocker()
+    blocker = ws.read_blocker()
+    if blocker is not None and blocker.blocked:
         print(f"  Blocked: {blocker.reason}")
     else:
         print("  Blocked: False")

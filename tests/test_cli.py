@@ -20,6 +20,8 @@ import os
 import pytest
 from pathlib import Path
 
+from conftest import benchmark_intent_content
+
 TASK = "spatial_domain_identification"
 METHOD = "STAGATE"
 CASE = "DLPFC_151673"
@@ -211,67 +213,153 @@ def test_scaffold_with_data_flag_populates_convenience_line(tmp_path):
 
 def _build_completed_workspace(root: Path) -> Path:
     """
-    Build a minimal but real-task-derived completed workspace under root.
+    Build a real-task-derived blocked-but-complete workspace under root.
 
-    Writes structural_check.json and experience_record.json using real schemas
-    from models.py and real-task-derived values (task/method/case from the
-    actual spatial_domain_identification benchmark; blocked cycle with missing
-    DLPFC data).
+    Writes all artifacts required-always by s14 (benchmark_intent.md +
+    paper_evidence, repo_evidence, data_manifest, task_spec,
+    evaluation_contract, risk_audit, blocker [blocked:true], execution_log
+    [status:not_attempted], experience_record) so that when check re-runs s14
+    it finds all required artifacts and returns passed:True.
+
+    Does NOT write raw_observations / result_validity_audit / interpretation —
+    these are excused by blocker.blocked:true.
 
     Provenance: values mirror what the real pipeline would produce for a
     blocked run where the DLPFC .h5ad is absent.  Not fabricated beyond task
     identity.
     """
-    ws_dir = root / TASK / CASE / METHOD
-    ws_dir.mkdir(parents=True, exist_ok=True)
+    from sobench.models import (
+        PaperEvidence, RepoEvidence, DataManifest, TaskSpec,
+        EvaluationContract, RiskAudit, Blocker, ExecutionLog, ExperienceRecord,
+    )
+    from sobench.workspace import Workspace
 
-    # --- structural_check.json (real-task-derived blocked-cycle result) ---
-    sc = {
-        "task": TASK,
-        "method": METHOD,
-        "case": CASE,
-        "passed": True,
-        "structurally_complete": True,
-        "completed_with_blocker": True,
-        "execution_attempted": False,
-        "benchmark_result_claimed": False,
-        "checks": [
-            {"artifact": "benchmark_intent.md", "present": True},
-        ],
-        "missing_unacknowledged": [],
-        "warnings": ["execution not attempted — blocked on missing data"],
-    }
-    (ws_dir / "structural_check.json").write_text(
-        json.dumps(sc, indent=2), encoding="utf-8"
+    ws = Workspace(task=TASK, method=METHOD, case=CASE, root=str(root))
+    ws.dir.mkdir(parents=True, exist_ok=True)
+
+    # --- benchmark_intent.md (markdown, presence only) ---
+    (ws.dir / "benchmark_intent.md").write_text(
+        benchmark_intent_content(TASK, METHOD, CASE), encoding="utf-8"
     )
 
-    # --- experience_record.json (real-task-derived blocked-cycle record) ---
-    exp = {
-        "id": "exp-001",
-        "task": TASK,
-        "method": METHOD,
-        "case": CASE,
-        "tags": ["data_missing", "spatialLIBD", "DLPFC"],
-        "finding": "DLPFC 151673 .h5ad not present locally; spatialLIBD is the expected source",
-        "evidence": ["data_manifest.required[0]", "blocker.detail"],
-        "confidence": "high",
-        "failure_conditions": [],
-        "status": "hypothesis",
-        "created": "2026-06-19",
-    }
-    (ws_dir / "experience_record.json").write_text(
-        json.dumps(exp, indent=2), encoding="utf-8"
-    )
+    # --- paper_evidence ---
+    ws.write_artifact("paper_evidence", PaperEvidence(
+        task=TASK, method=METHOD,
+        source=str(PAPER_PATH),
+        evaluation_contexts=[{"case": CASE, "metric": "ARI"}],
+        coordinate_evidence="Section 4.1 reports ARI on DLPFC slices.",
+        coordinate_open_questions=[],
+        ambiguities=[],
+        missing=[],
+    ))
 
-    return ws_dir
+    # --- repo_evidence ---
+    ws.write_artifact("repo_evidence", RepoEvidence(
+        task=TASK, method=METHOD,
+        entry_points=["tutorial/DLPFC_tutorial.py"],
+        dependencies={"scanpy": ">=1.9", "torch": ">=1.10"},
+        hardcoded_paths=[],
+        metric_implementations=["ARI via sklearn"],
+        deviations_from_paper=[],
+        coordinate_evidence="Tutorial notebook uses ARI from sklearn.",
+        coordinate_open_questions=[],
+        ambiguities=[],
+        missing=[],
+    ))
+
+    # --- data_manifest ---
+    ws.write_artifact("data_manifest", DataManifest(
+        task=TASK, method=METHOD, case=CASE,
+        required=[{"file": "151673.h5ad", "source": "spatialLIBD", "present": False}],
+        coordinate_evidence="spatialLIBD hosts DLPFC slices.",
+        coordinate_assumptions="spatialLIBD download required.",
+        coordinate_open_questions=[],
+        coordinate_checks=[],
+        open_questions=["Where is the .h5ad locally?"],
+    ))
+
+    # --- task_spec ---
+    ws.write_artifact("task_spec", TaskSpec(
+        task=TASK, method=METHOD, case=CASE,
+        source_context="STAGATE paper section 4.1",
+        input_description="DLPFC 151673 Visium .h5ad",
+        expected_output="Spatial domain labels per spot",
+        primary_metric={"name": "ARI", "higher_is_better": True},
+        assumptions=["spatialLIBD ground truth available"],
+        unresolved=["Data not present locally"],
+    ))
+
+    # --- evaluation_contract ---
+    ws.write_artifact("evaluation_contract", EvaluationContract(
+        task=TASK, method=METHOD, case=CASE,
+        metric={"name": "ARI", "higher_is_better": True},
+        data_requirements_resolved=False,
+        data_blockers=["DLPFC 151673 .h5ad absent"],
+        open_questions=[],
+    ))
+
+    # --- risk_audit ---
+    ws.write_artifact("risk_audit", RiskAudit(
+        task=TASK, method=METHOD, case=CASE,
+        risks=[{"id": "R1", "description": "Data absent", "severity": "blocker"}],
+        overall_confidence="low",
+        blocker_risk_ids=["R1"],
+    ))
+
+    # --- blocker (blocked:true — excuses s10/s11/s12) ---
+    ws.write_artifact("blocker", Blocker(
+        blocked=True,
+        raised_by_step="s09_execute_or_block",
+        reason="DLPFC 151673 .h5ad not present locally",
+        detail="spatialLIBD download required before execution can proceed.",
+        evidence="data_manifest.required[0].present == False",
+        resolution="Download from spatialLIBD and place at expected path.",
+        human_action_required=True,
+    ))
+
+    # --- execution_log (not_attempted — execution_attempted:False in s14) ---
+    ws.write_artifact("execution_log", ExecutionLog(
+        task=TASK, method=METHOD, case=CASE,
+        status="not_attempted",
+        command="",
+        stdout_excerpt="",
+        stderr_excerpt="",
+        duration_seconds=None,
+        environment={},
+        output_files=[],
+    ))
+
+    # --- experience_record ---
+    ws.write_artifact("experience_record", ExperienceRecord(
+        id="exp-001",
+        task=TASK, method=METHOD, case=CASE,
+        tags=["data_missing", "spatialLIBD", "DLPFC"],
+        finding="DLPFC 151673 .h5ad not present locally; spatialLIBD is the expected source",
+        evidence=["data_manifest.required[0]", "blocker.detail"],
+        confidence="high",
+        failure_conditions=[],
+        status="hypothesis",
+        created="2026-06-19",
+    ))
+
+    # Run s14 to produce structural_check.json (needed by report; deterministic).
+    from sobench.steps import s14_structural_check
+    s14_structural_check.run(ws)
+
+    return ws.dir
 
 
 # ---------------------------------------------------------------------------
-# check tests (against real-task-derived workspace fixture)
+# check tests — exit-code gate (deterministic, no LLM)
 # ---------------------------------------------------------------------------
 
-def test_check_returns_zero_when_passed(tmp_path, capsys):
-    """check exits 0 when structural_check.passed is True."""
+def test_check_exits_zero_and_prints_passed_for_blocked_complete_workspace(tmp_path, capsys):
+    """
+    check exits 0 AND prints PASSED when all required-always artifacts present
+    and blocker.blocked:true (post-exec artifacts excused).
+
+    s14 is pure Python — deterministic, no LLM required.
+    """
     _build_completed_workspace(tmp_path)
     from sobench import cli
 
@@ -282,27 +370,71 @@ def test_check_returns_zero_when_passed(tmp_path, capsys):
         "--case", CASE,
         "--root", str(tmp_path),
     ])
-    # check re-runs s14, which needs benchmark_intent.md and all artifacts.
-    # Our fixture is minimal; s14 will write a new structural_check.json
-    # based on what is present. Accept any exit code but assert no crash
-    # and that "not yet implemented" is gone.
     captured = capsys.readouterr()
-    assert "not yet implemented" not in captured.out.lower(), (
-        "check still prints stub message"
+
+    assert exit_code == 0, (
+        f"check should return 0 for a blocked-but-complete workspace, got {exit_code}.\n"
+        f"stdout: {captured.out!r}\nstderr: {captured.err!r}"
+    )
+    assert "passed" in captured.out.lower(), (
+        f"Expected 'PASSED' in check output, got: {captured.out!r}"
     )
 
 
-def test_check_output_contains_structural_check(tmp_path, capsys):
-    """check prints 'Structural check' status line."""
-    _build_completed_workspace(tmp_path)
+def test_check_exits_nonzero_and_prints_failed_when_required_artifact_missing(tmp_path, capsys):
+    """
+    check exits non-zero AND names the missing artifact when a required-always
+    artifact is absent and blocker.blocked:false (not a blocked run).
+
+    Scenario: workspace has benchmark_intent.md, blocker [blocked:false], and
+    experience_record, but task_spec is absent — s14 counts it as
+    missing_unacknowledged and returns passed:False.
+
+    s14 is pure Python — deterministic, no LLM required.
+    """
+    from sobench.models import Blocker, ExecutionLog, ExperienceRecord
+    from sobench.workspace import Workspace
+
+    ws = Workspace(task=TASK, method=METHOD, case=CASE, root=str(tmp_path))
+    ws.dir.mkdir(parents=True, exist_ok=True)
+
+    # benchmark_intent.md present
+    (ws.dir / "benchmark_intent.md").write_text(
+        benchmark_intent_content(TASK, METHOD, CASE), encoding="utf-8"
+    )
+
+    # blocker present but NOT blocked — post-exec artifacts are NOT excused
+    ws.write_artifact("blocker", Blocker(
+        blocked=False,
+        raised_by_step=None,
+        reason=None,
+        detail=None,
+        evidence=None,
+        resolution=None,
+        human_action_required=False,
+    ))
+
+    # experience_record present
+    ws.write_artifact("experience_record", ExperienceRecord(
+        id="exp-001",
+        task=TASK, method=METHOD, case=CASE,
+        tags=[],
+        finding="Partial workspace — task_spec intentionally absent for this test.",
+        evidence=[],
+        confidence="low",
+        failure_conditions=[],
+        status="hypothesis",
+        created="2026-06-19",
+    ))
+
+    # Intentionally omit paper_evidence, repo_evidence, data_manifest,
+    # task_spec, evaluation_contract, risk_audit, execution_log,
+    # raw_observations, result_validity_audit, interpretation.
+    # With blocker.blocked:false, all absent JSON artifacts are unacknowledged.
+
     from sobench import cli
 
-    # check re-runs s14 which needs benchmark_intent.md; create a minimal one
-    ws_dir = tmp_path / TASK / CASE / METHOD
-    if not (ws_dir / "benchmark_intent.md").exists():
-        (ws_dir / "benchmark_intent.md").write_text("## Task\ntest\n", encoding="utf-8")
-
-    cli.main([
+    exit_code = cli.main([
         "check",
         "--task", TASK,
         "--method", METHOD,
@@ -310,8 +442,16 @@ def test_check_output_contains_structural_check(tmp_path, capsys):
         "--root", str(tmp_path),
     ])
     captured = capsys.readouterr()
-    assert "structural check" in captured.out.lower(), (
-        f"Expected 'Structural check' in output, got: {captured.out!r}"
+
+    assert exit_code != 0, (
+        f"check should return non-zero when required artifacts missing, got {exit_code}.\n"
+        f"stdout: {captured.out!r}"
+    )
+    assert "failed" in captured.out.lower(), (
+        f"Expected 'FAILED' in check output, got: {captured.out!r}"
+    )
+    assert "missing" in captured.out.lower(), (
+        f"Expected missing artifact names in output, got: {captured.out!r}"
     )
 
 
@@ -411,35 +551,9 @@ def test_run_wires_runner_against_real_blocked_task(tmp_path, capsys):
     # Build workspace with real-task-derived benchmark_intent.md
     ws_dir = tmp_path / TASK / CASE / METHOD
     ws_dir.mkdir(parents=True, exist_ok=True)
-    intent_content = f"""\
-## Task
-{TASK}
-
-## Method
-{METHOD}
-
-## Case
-{CASE}
-
-## Paper
-path: {PAPER_PATH}
-notes: Section 4.1 describes DLPFC evaluation. ARI mentioned as primary metric.
-
-## Repository
-path: {REPO_PATH}
-notes: Entry point unclear. Tutorial notebook exists.
-
-## Data
-notes: DLPFC slice 151673 required. File location unknown locally.
-
-## What to reconstruct
-Reproduce the spatial domain identification result on DLPFC 151673 as reported
-in the paper, using ARI as the primary metric if evidence supports it.
-
-## Human observations
-(fill in after run, or add any prior knowledge to guide reconstruction)
-"""
-    (ws_dir / "benchmark_intent.md").write_text(intent_content, encoding="utf-8")
+    (ws_dir / "benchmark_intent.md").write_text(
+        benchmark_intent_content(TASK, METHOD, CASE), encoding="utf-8"
+    )
 
     exit_code = cli.main([
         "run",

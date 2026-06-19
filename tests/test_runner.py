@@ -34,6 +34,8 @@ from pathlib import Path
 
 import pytest
 
+from conftest import benchmark_intent_content
+
 # ---------------------------------------------------------------------------
 # Fixtures and constants
 # ---------------------------------------------------------------------------
@@ -150,35 +152,9 @@ def test_real_blocked_pipeline(tmp_path):
     ws = Workspace(task=TASK, method=METHOD, case=CASE, root=str(tmp_path))
     ws.dir.mkdir(parents=True, exist_ok=True)
 
-    intent_content = f"""\
-## Task
-{TASK}
-
-## Method
-{METHOD}
-
-## Case
-{CASE}
-
-## Paper
-path: {PAPER_PATH}
-notes: Section 4.1 describes DLPFC evaluation. ARI mentioned as primary metric.
-
-## Repository
-path: {REPO_PATH}
-notes: Entry point unclear. Tutorial notebook exists.
-
-## Data
-notes: DLPFC slice 151673 required. File location unknown locally.
-
-## What to reconstruct
-Reproduce the spatial domain identification result on DLPFC 151673 as reported
-in the paper, using ARI as the primary metric if evidence supports it.
-
-## Human observations
-(fill in after run, or add any prior knowledge to guide reconstruction)
-"""
-    (ws.dir / "benchmark_intent.md").write_text(intent_content, encoding="utf-8")
+    (ws.dir / "benchmark_intent.md").write_text(
+        benchmark_intent_content(TASK, METHOD, CASE), encoding="utf-8"
+    )
 
     # Run the full real pipeline
     executed = runner.run(ws)
