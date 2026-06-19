@@ -2,8 +2,8 @@
 
 ## Current State
 
-**Last Updated:** 2026-06-19 (implementation session — subagent-driven, real-LLM)
-**Active Feature:** feat-sobench-001 (package skeleton: models + workspace)
+**Last Updated:** 2026-06-19 (implementation session COMPLETE — subagent-driven, real-LLM)
+**Active Feature:** none — all 10 sobench features (feat-sobench-001..010) done; P0 vertical slice complete.
 
 ## Project
 
@@ -26,14 +26,15 @@ The 14-step loop reconstructs what benchmark a method paper intended, audits val
 
 ### What's In Progress
 
-- [ ] feat-sobench-001 (package skeleton: models + workspace) — implementation starting.
-  - Executing the full 10-task plan via subagent-driven development.
+- [ ] None. All 10 features complete; the full 14-step loop is implemented, wired into the
+  CLI (scaffold/run/check/report), and verified end-to-end against the real task.
 
-### What's Next
+### What's Next (future phases, out of P0 scope)
 
-1. feat-sobench-001 → 010 in order, one implementer subagent + task review per feature.
-2. Each feature: write real-task tests first, then implement, then verify with `./init.sh`.
-3. Final whole-branch review, then finish.
+1. P1: `sobench` searches prior experience records on demand at ambiguities.
+2. P2: relevant scoped experience selectively injected into future runs.
+3. Enable the s09 feasible execution path in an environment with the method deps
+   (torch/scanpy/tensorflow) and real benchmark data present.
 
 ## Blockers / Risks
 
