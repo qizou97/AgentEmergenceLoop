@@ -46,10 +46,12 @@ def complete(prompt: str, system: str = "") -> str:
 
     Notes
     -----
-    Uses max_tokens=4096 to ensure the reasoning model has enough budget to
+    Uses max_tokens=8192 to ensure the reasoning model has enough budget to
     produce non-empty message.content (reasoning tokens are spent first; if
     max_tokens is too small the content comes back as an empty string even
-    though finish_reason is 'stop').
+    though finish_reason is 'stop').  8192 is needed for later steps (s08+)
+    whose prompts include multiple accumulated JSON artifacts and can generate
+    long risk / evaluation / experience responses.
     """
     _load_env()
 
@@ -69,7 +71,7 @@ def complete(prompt: str, system: str = "") -> str:
     response = client.chat.completions.create(
         model=model,
         messages=messages,
-        max_tokens=4096,
+        max_tokens=8192,
     )
 
     return response.choices[0].message.content or ""
