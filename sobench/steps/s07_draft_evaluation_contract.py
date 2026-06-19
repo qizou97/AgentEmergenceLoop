@@ -14,7 +14,6 @@ import json as _json
 
 from sobench.workspace import Workspace
 from sobench.models import (
-    ParsedIntent,
     PaperEvidence,
     RepoEvidence,
     DataManifest,
@@ -75,16 +74,15 @@ Data manifest:
 
 def run(workspace: Workspace) -> None:
     """Draft evaluation contract from prior artifacts. Does not set a blocker."""
-    pi = workspace.read_artifact("parsed_intent", ParsedIntent)
+    ts = workspace.read_artifact("task_spec", TaskSpec)
     pe = workspace.read_artifact("paper_evidence", PaperEvidence)
     re = workspace.read_artifact("repo_evidence", RepoEvidence)
     dm = workspace.read_artifact("data_manifest", DataManifest)
-    ts = workspace.read_artifact("task_spec", TaskSpec)
 
     prompt = _PROMPT_TEMPLATE.format(
-        task=pi.task,
-        method=pi.method,
-        case=pi.case,
+        task=ts.task,
+        method=ts.method,
+        case=ts.case,
         task_spec_json=_json.dumps(ts.to_dict(), indent=2),
         paper_evidence_json=_json.dumps(pe.to_dict(), indent=2),
         repo_evidence_json=_json.dumps(re.to_dict(), indent=2),
@@ -94,9 +92,9 @@ def run(workspace: Workspace) -> None:
     data = llm_json(prompt, system=_SYSTEM)
 
     # Resolve identity fields
-    task = data.get("task") or pi.task
-    method = data.get("method") or pi.method
-    case = data.get("case") or pi.case
+    task = data.get("task") or ts.task
+    method = data.get("method") or ts.method
+    case = data.get("case") or ts.case
 
     # Build metric dict — ensure 'resolved' is a bool
     metric_raw = data.get("metric", {})

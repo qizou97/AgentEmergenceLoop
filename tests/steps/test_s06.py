@@ -184,3 +184,4 @@ def test_s06_sets_blocker_when_no_evaluation_context(tmp_path):
     assert blocker is not None
     assert blocker.blocked is True
     assert blocker.raised_by_step is not None
+    assert "context" in blocker.reason.lower()

@@ -14,6 +14,7 @@ Path availability check:
 
 from __future__ import annotations
 
+import json as _json
 from pathlib import Path
 
 from sobench.workspace import Workspace
@@ -83,8 +84,6 @@ Parsed intent:
 
 def run(workspace: Workspace) -> None:
     """Enumerate data roles via LLM, check availability via Path.exists(), write data_manifest.json."""
-    import json as _json
-
     pi = workspace.read_artifact("parsed_intent", ParsedIntent)
     pe = workspace.read_artifact("paper_evidence", PaperEvidence)
     re = workspace.read_artifact("repo_evidence", RepoEvidence)
