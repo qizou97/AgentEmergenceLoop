@@ -189,6 +189,23 @@ def test_freeze_fail_data_case_not_in_task(tmp_path):
     assert any("MERFISH_0.99" in e or "case" in e.lower() for e in report["errors"])
 
 
+def test_freeze_fail_removes_stale_frozen_contracts(tmp_path):
+    """Spec §5 FAIL invariant: no frozen files. A FAIL after a prior PASS must
+    delete the now-stale frozen contracts so the runner never executes against them."""
+    proj = tmp_path / "p"
+    _write_drafts(proj)
+    assert freeze(proj)["passed"] is True
+    assert (proj / "task_contract.json").exists()
+
+    # Now break the drafts and re-freeze.
+    _write_drafts(proj, ground_truth_column="Cell_class")
+    report = freeze(proj)
+
+    assert report["passed"] is False
+    for name in ("task_contract.json", "data_contract.json", "metric_contract.json"):
+        assert not (proj / name).exists(), f"stale frozen {name} left on disk after FAIL"
+
+
 def test_freeze_contract_hash_matches_frozen_bytes(tmp_path):
     """contract_hashes must be the sha256 of the canonical frozen JSON bytes."""
     import hashlib

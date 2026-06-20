@@ -14,6 +14,7 @@ allowing a valid reordering.
 from __future__ import annotations
 
 import json
+from collections import Counter
 from pathlib import Path
 
 
@@ -61,7 +62,9 @@ def check_output(output_path: str | Path, expected_cell_ids: list[str]) -> list[
             )
 
     # Check 7: cell_ids multiset matches expected obs_names exactly (order-free).
-    if sorted(cell_ids) != sorted(expected_cell_ids):
+    # Counter hashes elements rather than ordering them, so heterogeneous scalar
+    # ids (a malformed driver output) yield a failure here instead of a TypeError.
+    if Counter(cell_ids) != Counter(expected_cell_ids):
         failures.append(
             f"check 7 failed: cell_ids do not match expected obs_names "
             f"(got {len(cell_ids)}, expected {len(expected_cell_ids)})"

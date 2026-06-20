@@ -99,6 +99,16 @@ def test_duplicate_ids_is_invalid_output(tmp_path):
     assert rec.metrics.ARI is None
 
 
+def test_mixed_type_cell_ids_is_invalid_output_not_crash(tmp_path):
+    """A driver emitting heterogeneous cell_ids must yield invalid_output, never crash."""
+    true = _ground_truth()
+    out = _write_output(tmp_path, ["spot1", 2, "spot3"], [0, 1, 2])
+    rec = build_record(output_path=out, ground_truth=true, metrics=["ARI"],
+                       returncode=0, **IDENT)
+    assert rec.status == "invalid_output"
+    assert rec.metrics.ARI is None
+
+
 def test_run_errors_clearly_when_contracts_absent(tmp_path):
     """Spec §9: runner exits with a clear error before touching data."""
     with pytest.raises(FileNotFoundError) as exc:

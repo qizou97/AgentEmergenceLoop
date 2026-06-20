@@ -115,6 +115,13 @@ def freeze(project_dir: str | Path) -> dict:
     timestamp = datetime.now(timezone.utc).isoformat()
 
     if errors:
+        # Spec §5: a FAIL leaves no frozen contracts. Remove any stale ones from a
+        # prior PASS so the runner (which gates on file presence) can never execute
+        # against contracts the current drafts no longer satisfy.
+        for name in ("task_contract.json", "data_contract.json", "metric_contract.json"):
+            stale = project_dir / name
+            if stale.exists():
+                stale.unlink()
         report = {"passed": False, "timestamp": timestamp, "errors": errors}
         write_json_atomic(project_dir / "freeze_report.json", report)
         return report

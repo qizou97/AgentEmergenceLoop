@@ -133,3 +133,17 @@ def test_check7_reordered_ids_pass(tmp_path, expected_ids):
     reordered = list(reversed(expected_ids))
     out = _valid_output(reordered)
     assert check_output(_write(tmp_path, out), expected_ids) == []
+
+
+def test_mixed_type_cell_ids_returns_failure_not_crash(tmp_path, expected_ids):
+    """A driver emitting heterogeneous cell_ids must be a recorded failure, not a crash.
+
+    sorted() would raise TypeError comparing int vs str; the checker must instead
+    return a check-7 failure string (its whole contract is "return failures").
+    """
+    out = _valid_output(expected_ids)
+    out["cell_ids"] = ["spot1", 2, "spot3"]  # mixed scalar types
+    out["labels"] = [0, 1, 2]
+    failures = check_output(_write(tmp_path, out), expected_ids)
+    assert failures  # non-empty, and no exception escaped
+    assert any("7" in f for f in failures)
