@@ -19,9 +19,9 @@ The final product is not an evidence log. It is an executable, task-specific ben
 - Experience reuse is the runtime equivalent of accumulating operational skill knowledge.
 
 **Staged delivery:**
-- **Stage 1 (scaffold):** `synthesize` generates a smoke-valid benchmark project — drivers pass the smoke check (run without crashing, produce valid labels on 100 spots).
-- **Stage 2 (execute):** `execute-benchmark` runs all methods × cases and produces `results.csv` with ARI/NMI values.
-- **Stage 3 (close loop):** `update-experience` feeds outcomes back into scoped experience records and the experience store; future synthesis runs use those records.
+- **Stage 1 (scaffold):** `synthesize` generates the benchmark scaffold and driver candidates — `benchmark_projects/` tree with `driver.py`, `env.yml`, `method_card.md`, `data_adapter.py`, `metrics.py`, `run_benchmark.py`. No execution; drivers are LLM-generated candidates, not yet validated.
+- **Stage 2 (execute):** `execute-benchmark` creates conda environments, smoke-validates drivers (generate→run→repair loop), and runs the full benchmark across all methods × cases, producing `results.csv` with ARI/NMI values.
+- **Stage 3 (close loop):** `update-experience` feeds execution results, failures, env fixes, adapter repairs, and metric decisions back into scoped experience records and the experience store; future synthesis runs use those records.
 
 ---
 
