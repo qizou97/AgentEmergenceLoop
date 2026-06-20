@@ -61,7 +61,8 @@ def complete(prompt: str, system: str = "") -> str:
     base_url = os.environ["OPENAI_BASE_URL"]
     model = os.environ["OPENAI_MODEL_NAME"]
 
-    client = OpenAI(api_key=api_key, base_url=base_url)
+    timeout = float(os.environ.get("OPENAI_TIMEOUT", "1800"))
+    client = OpenAI(api_key=api_key, base_url=base_url, timeout=timeout)
 
     messages: list[dict] = []
     if system:
