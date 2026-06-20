@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "modern-tsf"
+version = "0.3.3"
+description = "ModernTSF — Modern Time Series Forecasting with TOML-driven configs, explicit sweeps, and registry-based extensibility."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy",
+    "pandas",
+    "matplotlib",
+    "scikit-learn",
+    "pydantic",
+    "einops",
+    "fvcore",
+    "ipython",
+    "jupyterlab",
+    # PyTorch — the build/backend (CPU vs CUDA cuXXX) is chosen at install time
+    # via UV_TORCH_BACKEND (auto|cpu|cu118|cu121|cu124|cu126|cu128). Do NOT pin a
+    # +cuXXX local version or an explicit index here, or it overrides backend
+    # selection. See the `setup-env` skill / docs/en/setup-env.md.
+    "torch==2.6.0",
+    "torchinfo",
+    "torchvision==0.21.0",
+    "torchaudio==2.6.0",
+    # HuggingFace datasets (for GIFT-EVAL data loading)
+    "datasets",
+    # ODE solvers for the CauAir AirPhyNet / AirDualODE physics-informed models
+    "torchdiffeq",
+    # LSH self-attention for the Reformer model (src/models/module).
+    # Transitively pulls local-attention / axial-positional-embedding / etc.
+    "reformer-pytorch",
+    # Wavelet filter banks for the STWave model (src/models/stwave).
+    "pywavelets",
+]
+
+[project.scripts]
+modern-tsf = "benchmark.cli:main"
+tsf-schema-export = "tsf_core.export:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["benchmark*", "data*", "models*", "tsf_core*"]
+
+[tool.setuptools.package-data]
+tsf_core = ["schema/*.json"]
+
+# PyTorch backend (CPU/CUDA) is resolved at install time by uv via
+# UV_TORCH_BACKEND (auto|cpu|cu118|cu121|cu124|cu126|cu128) — see the
+# `setup-env` skill. No explicit [tool.uv.sources]/[[tool.uv.index]] pin is
+# declared here so that backend selection is not overridden.
