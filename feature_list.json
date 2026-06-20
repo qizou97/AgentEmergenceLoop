@@ -1,4 +1,6 @@
 {
+  "project": "sobench v3 — deterministic benchmark-construction substrate (M1)",
+  "spec": "docs/superpowers/specs/2026-06-20-sobench-v3-design.md",
   "features": [
     {
       "id": "feat-001",
@@ -9,84 +11,108 @@
       "evidence": "2026-06-16: smoke test + .gitignore added; ./init.sh passing."
     },
     {
-      "id": "feat-sobench-001",
-      "name": "sobench: Package Skeleton — Models + Workspace",
-      "description": "15 artifact dataclasses (from_dict/to_dict/validate, identity fields task/method/case) and Workspace class (path resolution root/task/case/method, artifact I/O, read_blocker, blocked property). Pure-Python, no LLM. Tests: tests/test_models.py, tests/test_workspace.py.",
+      "id": "feat-v3-F0",
+      "name": "Purge v1 + scope the deterministic gate",
+      "description": "Remove the superseded v1 14-step LLM pipeline (steps/, cli.py, __main__.py, models.py, workspace.py, runner.py) and its ~220 real-LLM tests; keep llm.py (M2-reserved) and the repo smoke test. Re-scope ./init.sh + pytest to `sobench tool tests` (exclude references/). Add pyproject.toml pytest config + benchmark_projects/ gitignore.",
       "dependencies": ["feat-001"],
       "status": "done",
-      "evidence": "2026-06-19: 44 tests pass (43 new + 1 smoke); ./init.sh clean. 14 dataclasses, Workspace class, TDD cycle completed."
+      "evidence": "2026-06-20: commit 50409d0. ./init.sh green in 0.01s, 0 references/ items collected (was 135), no LLM. v1 recoverable in git history."
     },
     {
-      "id": "feat-sobench-002",
-      "name": "sobench: LLM Wrapper",
-      "description": "sobench/llm.py: complete(prompt, system=\"\") -> str over an OpenAI-compatible endpoint, config from .env via python-dotenv (OPENAI_BASE_URL/OPENAI_MODEL_NAME/OPENAI_API_KEY). Real-LLM test over real data/ inputs; skip with explicit reason if .env config absent.",
-      "dependencies": ["feat-sobench-001"],
+      "id": "feat-v3-F1",
+      "name": "contracts/bench_record.py",
+      "description": "SpatialMetrics + BenchRecord pydantic models (extra=forbid), the fixed result schema (spec §4.4).",
+      "dependencies": ["feat-v3-F0"],
       "status": "done",
-      "evidence": "2026-06-19: sobench/llm.py; tests/test_llm.py real-endpoint test passes."
+      "evidence": "2026-06-20: commit 803ddc3. tests/test_contracts.py round-trip + extra-field rejection + null metrics, real identifiers. 5 tests."
     },
     {
-      "id": "feat-sobench-003",
-      "name": "sobench: CLI + Scaffold Subcommand",
-      "description": "sobench/cli.py (argparse, 4 subcommands) + sobench/__main__.py. scaffold creates workspaces/T/C/M/ and writes benchmark_intent.md template; run/check/report are stubs. Tests: tests/test_cli.py.",
-      "dependencies": ["feat-sobench-001"],
+      "id": "feat-v3-F2",
+      "name": "contracts/{task,data,metric} + freeze.py",
+      "description": "Contract models + freeze flow (spec §5): open real h5ad, validate ground_truth_column/spatial_key against actual obs/obsm, case-subset, metric-subset; PASS freezes 3 contracts + freeze_report with sha256 hashes, FAIL writes errors only; drafts preserved.",
+      "dependencies": ["feat-v3-F1"],
       "status": "done",
-      "evidence": "2026-06-19: cli.py+__main__.py; tests/test_cli.py passes."
+      "evidence": "2026-06-20: commit 803ddc3. freeze pass + 4 real failure modes (stale Cell_class, bad spatial_key, bad metric, unknown case) + hash byte-match, against MERFISH_0.04.h5ad. 6 tests."
     },
     {
-      "id": "feat-sobench-004",
-      "name": "sobench: Steps s01–s04",
-      "description": "s01 ensure_workspace (raises if missing), s02 parse_intent (LLM, blocker if task/method unparseable), s03 extract_paper_evidence (PDF text + LLM, blocker if paper absent), s04 inspect_repo_evidence (walk repo + LLM, never blocks). Real-task tests over data/spatial_domain_identification_task; LLM steps skip if no key.",
-      "dependencies": ["feat-sobench-001", "feat-sobench-002"],
+      "id": "feat-v3-F3",
+      "name": "metrics.py",
+      "description": "compute(pred, true, metrics) aligning by cell_id JOIN; AlignmentError on missing/extra; sklearn ARI/NMI (spec §10).",
+      "dependencies": ["feat-v3-F1"],
       "status": "done",
-      "evidence": "2026-06-19: steps s01–s04 + steps/_common.py; tests/steps/test_s01..s04 pass (real LLM)."
+      "evidence": "2026-06-20: commit 9084c5a. Real MERFISH_0.04 ground_truth: perfect=1.0, permutation-invariant, degraded matches sklearn, int labels, missing/extra raise. 7 tests."
     },
     {
-      "id": "feat-sobench-005",
-      "name": "sobench: Steps s05–s08",
-      "description": "s05 build_data_manifest (real Path.exists, never blocks), s06 draft_task_spec (blocker if no context), s07 draft_evaluation_contract (metric.resolved:false valid), s08 draft_risk_audit (always writes). Real-task tests; LLM steps skip if no key.",
-      "dependencies": ["feat-sobench-004"],
+      "id": "feat-v3-F4",
+      "name": "checker.py",
+      "description": "7-check smoke output validator (spec §7); check 7 = order-independent multiset equality to expected obs_names.",
+      "dependencies": ["feat-v3-F1"],
       "status": "done",
-      "evidence": "2026-06-19: steps s05–s08; tests/steps/test_s05..s08 pass (real LLM); s05 real Path.exists."
+      "evidence": "2026-06-20: commit 1783148. First 100 real obs_names: valid passes, each failure mode + reorder-passes + dup/extra/missing fail + bool/float rejected. 14 tests."
     },
     {
-      "id": "feat-sobench-006",
-      "name": "sobench: Step s09 — Execute or Block",
-      "description": "Feasibility check; subprocess exec when feasible; always writes blocker.json + execution_log.json (status not_attempted when blocked). Primary real path is blocked (DLPFC .h5ad genuinely absent under data/). Feasible path skips with reason if the real command cannot run here.",
-      "dependencies": ["feat-sobench-005"],
+      "id": "feat-v3-F5",
+      "name": "aggregator.py",
+      "description": "BenchRecords -> results.csv, fixed 15-column order, null metric = empty cell (spec §4.4).",
+      "dependencies": ["feat-v3-F1"],
       "status": "done",
-      "evidence": "2026-06-19: step s09; tests/steps/test_s09 blocked path + upstream-blocker-preserved pass (feasible skipped, heavy deps). Upstream blocker guard added 2026-06-19."
+      "evidence": "2026-06-20: commit b889a31. Real-identifier records (success + invalid_output): header order, float cells, empty null cells, row count. 5 tests."
     },
     {
-      "id": "feat-sobench-007",
-      "name": "sobench: Steps s10–s12",
-      "description": "s10 record_raw_observations, s11 audit_result_validity, s12 write_interpretation. s10/s11/s12 skip when workspace.blocked; s12 additionally runs when execution attempted but result invalid (benchmark_result_claimed:false). Real-task tests.",
-      "dependencies": ["feat-sobench-006"],
+      "id": "feat-v3-F6",
+      "name": "experience.py",
+      "description": "Append-only experience store (spec §11): 3 indexes, newest-first, schema_version, atomic os.replace, real h5ad fingerprint, partial/missing handling.",
+      "dependencies": ["feat-v3-F1"],
       "status": "done",
-      "evidence": "2026-06-19: steps s10–s12; tests/steps/test_s10..s12 pass (real LLM); skip-when-blocked verified."
+      "evidence": "2026-06-20: commit b4433a1. Realistic project over MERFISH_0.04: all 3 indexes, independent statuses, real fingerprint (obs_columns/has_raw=False), real metric value, partial-when-env-absent, newest-first, no leftover .tmp. 8 tests."
     },
     {
-      "id": "feat-sobench-008",
-      "name": "sobench: Steps s13–s14",
-      "description": "s13 write_experience_record (always runs, status=hypothesis, captures blocker learning), s14 structural_check (pure Python; passed:false only when missing_unacknowledged non-empty; blocker excuses s10/s11/s12). s13 real-LLM test skips if no key; s14 pure-Python.",
-      "dependencies": ["feat-sobench-007"],
+      "id": "feat-v3-F7",
+      "name": "scaffold.py",
+      "description": "Project tree + fixed method-agnostic run_benchmark.py template that delegates to sobench.runner (spec §9).",
+      "dependencies": ["feat-v3-F0"],
       "status": "done",
-      "evidence": "2026-06-19: steps s13–s14; tests/steps/test_s13 (real LLM) + test_s14 (deterministic) pass."
+      "evidence": "2026-06-20: commit be5ada1. Tree created, template compiles, references runner, no method names, idempotent. 5 tests."
     },
     {
-      "id": "feat-sobench-009",
-      "name": "sobench: Runner + CLI run/check/report",
-      "description": "runner.py calls all 14 steps in order with SKIP_WHEN_BLOCKED (s10/s11/s12 skip when blocked; s13/s14 always run). Wire run/check/report into CLI. Tests verify skip logic and ordering against the real task.",
-      "dependencies": ["feat-sobench-008", "feat-sobench-003"],
+      "id": "feat-v3-F8",
+      "name": "runner.py",
+      "description": "run(project_dir): load frozen contracts, select interpreter from env_record, subprocess driver, validate via checker, align by cell_id join, compute metrics, write BenchRecord (spec §9-§10). build_record() is the deterministic core.",
+      "dependencies": ["feat-v3-F3", "feat-v3-F4"],
       "status": "done",
-      "evidence": "2026-06-19: runner.py implemented (STEPS s01→s14, SKIP_WHEN_BLOCKED, returns executed list). CLI stubs replaced with real run/check/report. 4 runner tests pass (3 static + 1 real blocked pipeline, 2:28); 15 CLI tests pass (14 non-LLM + 1 real run, 2:14). python -m compileall clean. 96 tests collected."
+      "evidence": "2026-06-20: commit e37f5c7. build_record vs real MERFISH_0.04 ground_truth: success ARI/NMI=1.0, dropped/duplicate id -> invalid_output, nonzero rc -> failed, contracts-absent -> clear FileNotFoundError. 5 tests. Live subprocess path = integration-only."
     },
     {
-      "id": "feat-sobench-010",
-      "name": "sobench: Integration Smoke Test (real task)",
-      "description": "End-to-end real-task test: intent fixture derived from data/ (provenance header, real paper/repo paths), real LLM, real blocked cycle (no .h5ad). Asserts structural_check passed:true, experience_record status=hypothesis with real evidence refs, blocker blocked:true with real reason, execution_log status=not_attempted. Skips with explicit reason if no key or real data absent.",
-      "dependencies": ["feat-sobench-009"],
+      "id": "feat-v3-F9",
+      "name": "env_builder.py",
+      "description": "build_env(project_dir, method): mamba-then-conda env at content-hash prefix (idempotent), interpreter_path in env_record.json (spec §3 env).",
+      "dependencies": ["feat-v3-F0"],
       "status": "done",
-      "evidence": "2026-06-19: tests/fixtures/intent_stagate_dlpfc.md (provenance header) + tests/test_integration.py created. Integration test RAN (not skipped) + PASSED in 157s. Also fixed sobench/llm.py max_tokens 4096→8192 to prevent s08 JSON truncation on accumulated-artifact prompts (pre-existing flaky failure in test_runner.py::test_real_blocked_pipeline now resolved). ./init.sh: 96 passed, 1 skipped in 794s. commit 2664b3c."
+      "evidence": "2026-06-20: commit 6fb952c. Pure helpers env_yml_hash + env_record_is_current tested (env.yml mirrors real STAGATE_pyG requirement.txt). 4 tests. Real env creation = integration-only."
+    },
+    {
+      "id": "feat-v3-F10",
+      "name": "smoke.py",
+      "description": "Deterministic 100-spot smoke h5ad from real case (fixed seed) + driver --smoke run + atomic driver_record append (spec §7).",
+      "dependencies": ["feat-v3-F4", "feat-v3-F9"],
+      "status": "done",
+      "evidence": "2026-06-20: commit cb8efb1. make_smoke_h5ad + append_attempt vs real MERFISH_0.04: determinism, n=100, structure preserved (genes/spatial/ground_truth/aligned rows), <100 edge, record grows with final_status+repair_count, no leftover .tmp. 5 tests. Live driver = integration-only."
+    },
+    {
+      "id": "feat-v3-F11",
+      "name": "tool/sobench.py CLI + agent skills + integration test",
+      "description": "Stdlib argparse CLI (7 subcommands -> python -m sobench.<module>); 6 agent-instructions/*/SKILL.md docs (spec §12); integration test (skip unless conda+repos+SOBENCH_RUN_INTEGRATION=1) asserting spec §13 end-state.",
+      "dependencies": ["feat-v3-F5", "feat-v3-F6", "feat-v3-F7", "feat-v3-F8", "feat-v3-F10"],
+      "status": "done",
+      "evidence": "2026-06-20: commit 0519187. CLI driven as subprocess (--help/unknown/scaffold/validate pass+fail) against real MERFISH_0.04. 6 CLI tests. Integration skips with explicit reason. End-to-end scaffold->validate->aggregate verified manually. ./init.sh: 70 passed, 1 skipped in ~4s."
+    },
+    {
+      "id": "feat-v3-M1-operate",
+      "name": "M1 operational goal: agent constructs the full MERFISH benchmark",
+      "description": "The external coding agent, guided by the 6 sobench skills, constructs all 3 methods × 5 MERFISH cases: inspect papers/repos/h5ad, draft+freeze contracts, write drivers/env.yml/data_adapter, build conda envs, smoke-validate, run the matrix, write results.csv + experience entries. Verified by tests/test_integration.py with SOBENCH_RUN_INTEGRATION=1.",
+      "dependencies": ["feat-v3-F11"],
+      "status": "todo",
+      "evidence": "Substrate complete and verified (deterministic, no LLM). This operational run is the agent's job on top of the substrate; integration test exists and is gated on conda env builds + agent-produced construction artifacts."
     }
   ]
 }

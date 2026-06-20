@@ -1,59 +1,82 @@
 # AgentEmergenceLoop
 
-An agent that reconstructs one spatial-omics benchmark task from paper/code/data context, preserves auditable evidence, either attempts execution or records a blocker, and writes a scoped experience note.
+**sobench v3** — a deterministic, hybrid benchmark-construction substrate for spatial omics.
 
-## Current Target
+sobench provides reproducible, auditable machinery operated by an external coding
+agent. The agent does the open-ended reasoning (read papers/repos/h5ad, write
+`driver.py` / `env.yml` / `data_adapter.py`, diagnose failures); sobench Python does
+everything that must be reproducible (contract validation/freeze, scaffolding, env
+records, smoke validation, metric computation, benchmark execution, aggregation,
+experience writing). **sobench makes no LLM calls in M1.**
 
-Build `sobench`: a 14-step pipeline that takes a `benchmark_intent.md` file plus local paper PDFs and method code, and produces a fully auditable workspace with task spec, data manifest, evaluation contract, execution result (or named blocker), and an experience record.
+Binding design spec: `docs/superpowers/specs/2026-06-20-sobench-v3-design.md`.
 
-## Environment Setup
+## The hybrid boundary
+
+| Plane | Owner | LLM calls? |
+|---|---|---|
+| Reasoning | External coding agent (Claude Code / Codex) | Yes — the agent is the LLM |
+| Reproducibility | sobench Python | No — zero LLM calls in M1 |
+
+## CLI — the single agent entry point
+
+Agents invoke only `tool/sobench.py` (pure stdlib; each subcommand forwards to an
+internal module):
 
 ```bash
-conda create -y -n sobench python=3.11
-conda activate sobench
-pip install -r requirements.txt
-cp .env.example .env   # then fill in OPENAI_BASE_URL, OPENAI_MODEL_NAME, OPENAI_API_KEY
+python tool/sobench.py scaffold    --project-dir <p> [--task <name>]
+python tool/sobench.py validate    --project-dir <p>
+python tool/sobench.py env         --project-dir <p> --method <M>
+python tool/sobench.py smoke       --project-dir <p> --method <M> --case <C>
+python tool/sobench.py run         --project-dir <p>
+python tool/sobench.py aggregate   --project-dir <p>
+python tool/sobench.py experience  --project-dir <p>
 ```
 
-The LLM wrapper uses the OpenAI SDK against an OpenAI-compatible endpoint, reading
-`OPENAI_BASE_URL`, `OPENAI_MODEL_NAME`, and `OPENAI_API_KEY` from `.env`. `.env` is
-git-ignored (`.env.example` is the committed template) — never commit real keys.
-Tests skip with an explicit reason when this config is absent (see `docs/TESTING_POLICY.md`).
+Agent-facing instructions for each stage live in `agent-instructions/*/SKILL.md`.
 
-## In Scope Now
+## Three environments (kept strictly separate)
 
-- `sobench` package: 15 artifact dataclasses, `Workspace` class, LLM wrapper, CLI (`scaffold / run / check / report`)
-- 14 pipeline steps: evidence extraction → task spec → execution → observation → experience record
-- Test suite covering every step against the real benchmark task under `data/` (no mock tests — see `docs/TESTING_POLICY.md`)
-- One end-to-end smoke/integration test over the real `data/spatial_domain_identification_task` task
+1. **Development** — runs sobench's own Python, substrate tests, and `./init.sh`.
+   Has `anndata` / `pydantic` / `numpy` / `scikit-learn` — NOT the heavy method deps.
+2. **Agent/runtime** — operates the harness (inspects files, edits code, invokes
+   `tool/sobench.py`).
+3. **Per-method conda envs** — one isolated env per benchmark method, built from
+   that method's `env.yml`. Drivers run through `env_record.json.interpreter_path`,
+   never through the development or agent environment.
 
-## Out of Scope Now
+## Verification
 
-- Automatic paper/code crawling or downloading
-- Multi-agent orchestration or parallelism
-- Vector databases, embedding search, or RAG
-- Dashboard, visualization, or result comparison across methods
-- Generic benchmark runner for arbitrary domains
-
-## Next Concrete Task
-
-Implement `feat-sobench-001`: the 15 artifact dataclasses (`from_dict` / `to_dict` / `validate`) and the `Workspace` class (path resolution, artifact I/O, `blocked` property).
-
-Steps:
-1. Run `./init.sh` to confirm baseline is clean.
-2. Write `tests/test_models.py` and `tests/test_workspace.py` first.
-3. Implement `sobench/models.py` and `sobench/workspace.py`.
-4. Verify with `python -m pytest tests/test_models.py tests/test_workspace.py`.
-
-## Repository Layout
-
-```
-data/                   # local paper PDFs and method code (input context)
-docs/superpowers/       # design spec and implementation plan
-feature_list.json       # feature state tracker (source of truth)
-progress.md             # session continuity log
-init.sh                 # startup and verification path
-tests/                  # test suite
+```bash
+./init.sh      # python -m pytest (sobench substrate) + compileall sobench tool tests
 ```
 
-See `feature_list.json` for the full feature list and completion status.
+The deterministic substrate tests run with no LLM and no conda (fast, restartable).
+The full method×case integration test (`tests/test_integration.py`) builds real
+conda envs and runs real drivers — it skips unless conda + method repos are present
+and `SOBENCH_RUN_INTEGRATION=1` is set. All tests use the real task under `data/`;
+no mocks (see `docs/TESTING_POLICY.md`).
+
+## Repository layout
+
+```
+tool/sobench.py            # single agent CLI entry point (stdlib)
+agent-instructions/        # agent-facing SKILL.md instructions (construct/validate/...)
+sobench/                   # deterministic substrate (contracts, scaffold, env_builder,
+                           #   smoke, checker, runner, metrics, aggregator, experience)
+sobench/llm.py             # retained from v1; unused in M1; reserved for M2
+benchmark_projects/        # git-ignored generated output
+experience_store/          # git-tracked, append-only operational knowledge
+data/spatial_domain_identification_task/   # real task: MERFISH h5ad + method repos + papers
+tests/                     # real-task substrate tests + opt-in integration test
+docs/                      # spec + testing policy
+feature_list.json          # feature state tracker (source of truth)
+progress.md                # session continuity log
+```
+
+## Current target
+
+M1: the agent, guided by the sobench skills, constructs the full spatial-domain
+benchmark — 3 methods (STAGATE_pyG, MENDER, SpaGCN) × 5 MERFISH cases — producing
+real ARI/NMI in a fixed result schema plus structured experience records.
+Capability grows through the append-only experience store; retrieval/reuse is M2.
