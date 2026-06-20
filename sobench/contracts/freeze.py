@@ -135,3 +135,23 @@ def freeze(project_dir: str | Path) -> dict:
     }
     write_json_atomic(project_dir / "freeze_report.json", report)
     return report
+
+
+def main(argv: list[str] | None = None) -> int:
+    """CLI entry: python -m sobench.contracts.freeze --project-dir <p>.
+
+    Exits 0 when the contracts froze, 1 when validation failed — so the agent's
+    `validate` skill can branch on the exit code as well as freeze_report.json.
+    """
+    import argparse
+
+    ap = argparse.ArgumentParser(prog="sobench.contracts.freeze")
+    ap.add_argument("--project-dir", required=True)
+    args = ap.parse_args(argv)
+    report = freeze(args.project_dir)
+    print(json.dumps(report, indent=2))
+    return 0 if report["passed"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

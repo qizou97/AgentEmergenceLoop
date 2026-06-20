@@ -69,3 +69,19 @@ def aggregate(project_dir: str | Path) -> Path:
         for row in to_rows(records):
             writer.writerow(row)
     return out
+
+
+def main(argv: list[str] | None = None) -> int:
+    """CLI entry: python -m sobench.aggregator --project-dir <p>."""
+    import argparse
+
+    ap = argparse.ArgumentParser(prog="sobench.aggregator")
+    ap.add_argument("--project-dir", required=True)
+    args = ap.parse_args(argv)
+    out = aggregate(args.project_dir)
+    print(f"wrote {out}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
