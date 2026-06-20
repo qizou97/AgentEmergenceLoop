@@ -11,3 +11,6 @@ dist/
 .env.*
 !.env.example
 
+# Generated benchmark projects (spec §2: produced artifacts, not source)
+benchmark_projects/
+

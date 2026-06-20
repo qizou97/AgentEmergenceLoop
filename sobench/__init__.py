@@ -1,1 +1,1 @@
-# sobench — evidence-guided agent for reproducible spatial-omics benchmark construction
+# sobench — deterministic substrate for reproducible spatial-omics benchmark construction

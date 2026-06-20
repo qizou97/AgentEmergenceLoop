@@ -1,0 +1,6 @@
+[tool.pytest.ini_options]
+# Keep the verification gate fast and deterministic: collect only the repo's own
+# tests. references/ vendors other projects (ModernTSF, SkillOpt) whose own test
+# suites must never enter this repo's gate.
+testpaths = ["tests"]
+norecursedirs = ["references", "benchmark_projects", "data", ".git", "*.egg-info"]

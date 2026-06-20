@@ -3,11 +3,11 @@ set -e
 
 echo "=== Harness Initialization ==="
 
-echo "=== python -m pytest ==="
+echo "=== python -m pytest (sobench substrate; references/ excluded) ==="
 python -m pytest
 
-echo "=== python -m compileall . ==="
-python -m compileall .
+echo "=== python -m compileall sobench tool tests ==="
+python -m compileall -q sobench tool tests
 
 echo "=== Verification Complete ==="
 echo ""
